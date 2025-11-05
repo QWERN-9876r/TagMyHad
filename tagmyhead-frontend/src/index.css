@@ -389,29 +389,6 @@ h6 {
 }
 
 /* ==========================================
-   🎨 SCROLLBAR
-   ========================================== */
-
-::-webkit-scrollbar {
-    width: 1px;
-}
-
-::-webkit-scrollbar-track {
-    background: rgba(19, 19, 46, 0.5);
-    border-radius: var(--radius-md);
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--gradient-primary);
-    border-radius: var(--radius-md);
-    border: none;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--gradient-rainbow);
-}
-
-/* ==========================================
    ✨ SELECTION
    ========================================== */
 
