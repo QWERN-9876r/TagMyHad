@@ -22,6 +22,7 @@ type Room struct {
 	Characters map[string]string `json:"characters"` // playerId -> character
 	WhoMakeFor map[string]Player `json:"who_make_for"`
 	CreatedAt  time.Time         `json:"created_at"`
+	Messages   []WSMessage       `json:"messages"`
 	
 	// WebSocket connections
 	Connections map[string]*websocket.Conn `json:"-"` // playerId -> connection
@@ -112,6 +113,8 @@ func (r *Room) findPlayerById(playerId string) int {
 }
 
 func (r* Room) sendMessageToAll(msg WSMessage) {
+	r.Messages = append(r.Messages, msg)
+
 	for _, conn := range r.Connections {
 		go func(c *websocket.Conn) {
 			c.WriteJSON(msg)
@@ -208,11 +211,7 @@ func (r *Room) Broadcast(msg WSMessage) {
 
 	msg.Timestamp = time.Now().Unix()
 
-	for _, conn := range r.Connections {
-		go func(c *websocket.Conn) {
-			c.WriteJSON(msg)
-		}(conn)
-	}
+	r.sendMessageToAll(msg)
 }
 
 // Отправить сообщение конкретному игроку
@@ -221,6 +220,8 @@ func (r *Room) SendToPlayer(playerID string, msg WSMessage) {
 	defer r.connMu.RUnlock()
 
 	msg.Timestamp = time.Now().Unix()
+
+	r.Messages = append(r.Messages, msg)
 
 	if conn, exists := r.Connections[playerID]; exists {
 		conn.WriteJSON(msg)

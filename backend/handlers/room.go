@@ -35,6 +35,7 @@ func GetRoom(c echo.Context) error {
 		Players: room.Players,
 		Started: room.Started,
 		Characters: room.Characters,
+		Messages: room.Messages,
 	})
 }
 

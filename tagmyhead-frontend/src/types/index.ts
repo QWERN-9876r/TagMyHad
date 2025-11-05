@@ -11,6 +11,7 @@ export interface Room {
     created_at: string
     characters: Record<string, string>
     who_make_for?: Record<string, string>
+    messages: WSMessage[]
 }
 
 export interface GameState {

@@ -122,6 +122,8 @@ export class GamePage extends LitElement {
         try {
             this.room = await API.getRoom(this.roomCode)
 
+            this.messages = this.room.messages
+
             if (!this.room.started) {
                 navigate(`/room/${this.roomCode}`)
                 return
@@ -190,7 +192,7 @@ export class GamePage extends LitElement {
         try {
             this.room = await API.getRoom(this.roomCode)
 
-            console.log(this.room)
+            this.messages = this.room.messages
 
             this.requestUpdate()
         } catch (err) {
