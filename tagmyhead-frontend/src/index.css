@@ -86,6 +86,31 @@ body {
             background-size: 400% 400%;
             animation: gradientFlow 20s ease infinite;
         }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            background: #0a0a1f;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background: linear-gradient(
+                -45deg,
+                rgba(184, 76, 255, 0.15) 0%,
+                rgba(255, 61, 154, 0.15) 25%,
+                rgba(0, 245, 255, 0.15) 50%,
+                rgba(80, 255, 57, 0.15) 75%,
+                rgba(184, 76, 255, 0.15) 100%
+            );
+            background-size: 400% 400%;
+            animation: gradientFlow 20s ease infinite;
+        }
     }
 
     /* Primary - Electric Purple */
@@ -310,35 +335,6 @@ body {
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
     position: relative;
-}
-
-/* ==========================================
-   🎨 ANIMATED BACKGROUND
-   ========================================== */
-
-body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: -2;
-    background: #0a0a1f;
-}
-
-body::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    background: linear-gradient(
-        -45deg,
-        rgba(184, 76, 255, 0.15) 0%,
-        rgba(255, 61, 154, 0.15) 25%,
-        rgba(0, 245, 255, 0.15) 50%,
-        rgba(80, 255, 57, 0.15) 75%,
-        rgba(184, 76, 255, 0.15) 100%
-    );
-    background-size: 400% 400%;
-    animation: gradientFlow 20s ease infinite;
 }
 
 @keyframes gradientFlow {
