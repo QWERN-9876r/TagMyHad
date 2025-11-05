@@ -1,0 +1,539 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Fredoka:wght@400;500;600;700&display=swap');
+
+@keyframes gradientFlow {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+html,
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: auto;
+}
+
+:root {
+    /* ==========================================
+       🎮 GAME COLORS - Яркая игровая палитра
+       ========================================== */
+
+    /* ==========================================
+   🎨 ANIMATED BACKGROUND
+   ========================================== */
+
+    body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: -2;
+        background: #0a0a1f;
+        background-image: radial-gradient(
+                circle at 20% 30%,
+                rgba(184, 76, 255, 0.15) 0%,
+                transparent 40%
+            ),
+            radial-gradient(
+                circle at 80% 70%,
+                rgba(0, 245, 255, 0.15) 0%,
+                transparent 40%
+            ),
+            radial-gradient(
+                circle at 50% 50%,
+                rgba(255, 61, 154, 0.1) 0%,
+                transparent 50%
+            ),
+            radial-gradient(
+                circle at 10% 80%,
+                rgba(80, 255, 57, 0.1) 0%,
+                transparent 35%
+            ),
+            radial-gradient(
+                circle at 90% 20%,
+                rgba(255, 185, 0, 0.1) 0%,
+                transparent 35%
+            );
+    }
+
+    body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        background: linear-gradient(
+            -45deg,
+            rgba(184, 76, 255, 0.12) 0%,
+            rgba(255, 61, 154, 0.12) 25%,
+            rgba(0, 245, 255, 0.12) 50%,
+            rgba(80, 255, 57, 0.12) 75%,
+            rgba(184, 76, 255, 0.12) 100%
+        );
+        background-size: 400% 400%;
+        animation: gradientFlow 20s ease infinite;
+    }
+
+    /* Primary - Electric Purple */
+    --color-primary: #b84cff;
+    --color-primary-hover: #d580ff;
+    --color-primary-active: #9a2eff;
+    --color-primary-glow: rgba(184, 76, 255, 0.5);
+
+    /* Secondary - Hot Pink */
+    --color-secondary: #ff3d9a;
+    --color-secondary-hover: #ff6bb5;
+    --color-secondary-active: #e61c7a;
+
+    /* Accent - Neon Cyan */
+    --color-accent: #00f5ff;
+    --color-accent-hover: #4dffff;
+    --color-accent-active: #00d9e6;
+
+    /* Success - Lime Green */
+    --color-success: #50ff39;
+    --color-success-hover: #7dff6d;
+    --color-success-active: #3be622;
+
+    --color-success-glass: rgba(80, 255, 57, 0.5);
+    --color-success-glass-hover: rgba(125, 255, 109, 0.5);
+    --color-success-glass-active: rgba(59, 230, 34, 0.5);
+
+    /* Warning - Sun Orange */
+    --color-warning: #ffb800;
+    --color-warning-hover: #ffd04d;
+    --color-warning-active: #e6a300;
+
+    /* Error - Cherry Red */
+    --color-error: #ff3366;
+    --color-error-hover: #ff6692;
+    --color-error-active: #e61c4d;
+
+    /* Info - Sky Blue */
+    --color-info: #00c8ff;
+    --color-info-hover: #4ddfff;
+    --color-info-active: #00b0e6;
+
+    /* Special - Gold */
+    --color-gold: #ffd700;
+    --color-gold-hover: #ffe44d;
+    --color-gold-active: #e6c200;
+
+    /* ==========================================
+       🌈 GRADIENT MAGIC
+       ========================================== */
+
+    --gradient-primary: linear-gradient(135deg, #b84cff 0%, #ff3d9a 100%);
+    --gradient-secondary: linear-gradient(135deg, #ff3d9a 0%, #ff6b00 100%);
+    --gradient-rainbow: linear-gradient(
+        135deg,
+        #b84cff 0%,
+        #00f5ff 50%,
+        #50ff39 100%
+    );
+    --gradient-sunset: linear-gradient(
+        135deg,
+        #ff6b00 0%,
+        #ff3d9a 50%,
+        #b84cff 100%
+    );
+    --gradient-neon: linear-gradient(135deg, #00f5ff 0%, #b84cff 100%);
+
+    /* ==========================================
+       🎨 BACKGROUND - Темный космос с анимацией
+       ========================================== */
+
+    --color-bg-primary: #0a0a1f;
+    --color-bg-secondary: #13132e;
+    --color-bg-tertiary: #1a1a3a;
+    --color-bg-elevated: #1f1f47;
+    --color-bg-overlay: rgba(10, 10, 31, 0.95);
+
+    /* Glass эффект для контент блоков */
+    --glass-bg: rgba(31, 31, 71, 0.4);
+    --glass-border: rgba(184, 76, 255, 0.2);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    --glass-blur: blur(12px);
+
+    /* ==========================================
+       🃏 SURFACE COLORS
+       ========================================== */
+
+    --color-surface: rgba(31, 31, 71, 0.5);
+    --color-surface-hover: rgba(38, 38, 84, 0.6);
+    --color-surface-active: rgba(45, 45, 97, 0.7);
+    --color-surface-glass: rgba(31, 31, 71, 0.3);
+
+    /* ==========================================
+       ✨ TEXT COLORS
+       ========================================== */
+
+    --color-text-primary: #ffffff;
+    --color-text-secondary: #c8c8ff;
+    --color-text-tertiary: #9999cc;
+    --color-text-muted: #6666aa;
+    --color-text-inverse: #0a0a1f;
+
+    /* ==========================================
+       🔲 BORDERS
+       ========================================== */
+
+    --color-border: rgba(184, 76, 255, 0.3);
+    --color-border-hover: rgba(184, 76, 255, 0.5);
+    --color-border-focus: #b84cff;
+    --color-border-glow: rgba(184, 76, 255, 0.6);
+
+    /* ==========================================
+       📏 SPACING
+       ========================================== */
+
+    --space-xs: 0.375rem;
+    --space-sm: 0.625rem;
+    --space-md: 1rem;
+    --space-lg: 1.75rem;
+    --space-xl: 2.5rem;
+    --space-2xl: 3.5rem;
+    --space-3xl: 5rem;
+
+    /* ==========================================
+       🎯 BORDER RADIUS
+       ========================================== */
+
+    --radius-sm: 0.625rem;
+    --radius-md: 1rem;
+    --radius-lg: 1.25rem;
+    --radius-xl: 1.5rem;
+    --radius-2xl: 2rem;
+    --radius-full: 9999px;
+
+    /* ==========================================
+       💫 SHADOWS & GLOWS
+       ========================================== */
+
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
+    --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.7);
+
+    --glow-primary: 0 0 20px var(--color-primary-glow),
+        0 0 40px var(--color-primary-glow);
+    --glow-secondary: 0 0 20px rgba(255, 61, 154, 0.5);
+    --glow-accent: 0 0 20px rgba(0, 245, 255, 0.5);
+    --glow-success: 0 0 20px rgba(80, 255, 57, 0.5);
+
+    /* ==========================================
+       🎭 TYPOGRAPHY
+       ========================================== */
+
+    --font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-family-heading: 'Fredoka', 'Poppins', sans-serif;
+
+    --font-size-xs: 0.75rem;
+    --font-size-sm: 0.875rem;
+    --font-size-base: 1rem;
+    --font-size-lg: 1.125rem;
+    --font-size-xl: 1.375rem;
+    --font-size-2xl: 1.75rem;
+    --font-size-3xl: 2.25rem;
+    --font-size-4xl: 3rem;
+
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+    --font-weight-black: 800;
+
+    --line-height-tight: 1.2;
+    --line-height-normal: 1.5;
+    --line-height-relaxed: 1.8;
+
+    /* ==========================================
+       ⚡ TRANSITIONS
+       ========================================== */
+
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: 500ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    /* ==========================================
+       🎮 Z-INDEX LAYERS
+       ========================================== */
+
+    --z-base: 0;
+    --z-dropdown: 1000;
+    --z-sticky: 1020;
+    --z-fixed: 1030;
+    --z-modal-backdrop: 1040;
+    --z-modal: 1050;
+    --z-popover: 1060;
+    --z-tooltip: 1070;
+    --z-notification: 1080;
+    --z-top: 9999;
+}
+
+/* ==========================================
+   🌟 GLOBAL STYLES
+   ========================================== */
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    font-size: 16px;
+    overflow-x: hidden;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-family);
+    min-height: 100vh;
+    color: var(--color-text-primary);
+    line-height: var(--line-height-normal);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* ==========================================
+   🎨 ANIMATED BACKGROUND
+   ========================================== */
+
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background: #0a0a1f;
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(
+        -45deg,
+        rgba(184, 76, 255, 0.15) 0%,
+        rgba(255, 61, 154, 0.15) 25%,
+        rgba(0, 245, 255, 0.15) 50%,
+        rgba(80, 255, 57, 0.15) 75%,
+        rgba(184, 76, 255, 0.15) 100%
+    );
+    background-size: 400% 400%;
+    animation: gradientFlow 20s ease infinite;
+}
+
+@keyframes gradientFlow {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* ==========================================
+   🪟 GLASS MORPHISM - Контент блоки
+   ========================================== */
+
+.glass,
+.card,
+.panel,
+[class*='container']:not(body),
+[class*='wrapper'] {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--glass-shadow);
+}
+
+.glass:hover,
+.card:hover {
+    background: rgba(31, 31, 71, 0.5);
+    border-color: rgba(184, 76, 255, 0.4);
+    box-shadow: var(--glass-shadow), 0 0 20px rgba(184, 76, 255, 0.2);
+}
+
+/* ==========================================
+   📝 TYPOGRAPHY
+   ========================================== */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-family-heading);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-tight);
+    letter-spacing: -0.02em;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ==========================================
+   🎨 SCROLLBAR
+   ========================================== */
+
+::-webkit-scrollbar {
+    width: 12px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(19, 19, 46, 0.5);
+    border-radius: var(--radius-md);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--gradient-primary);
+    border-radius: var(--radius-md);
+    border: 2px solid rgba(19, 19, 46, 0.5);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--gradient-rainbow);
+}
+
+/* ==========================================
+   ✨ SELECTION
+   ========================================== */
+
+::selection {
+    background: rgba(184, 76, 255, 0.4);
+    color: var(--color-text-primary);
+    text-shadow: 0 0 8px rgba(184, 76, 255, 0.6);
+}
+
+/* ==========================================
+   🎯 FOCUS STYLES
+   ========================================== */
+
+:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* ==========================================
+   🎪 UTILITY CLASSES
+   ========================================== */
+
+.glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--glass-shadow);
+    padding: var(--space-xl);
+}
+
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--glass-shadow);
+    padding: var(--space-lg);
+    transition: all var(--transition-base);
+}
+
+.glass-card:hover {
+    background: rgba(31, 31, 71, 0.6);
+    border-color: rgba(184, 76, 255, 0.5);
+    transform: translateY(-2px);
+    box-shadow: var(--glass-shadow), 0 0 30px rgba(184, 76, 255, 0.3);
+}
+
+.gradient-text {
+    background: var(--gradient-rainbow);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.glow-text {
+    text-shadow: 0 0 10px var(--color-primary-glow),
+        0 0 20px var(--color-primary-glow);
+}
+
+.animate-float {
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%,
+    100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+/* ==========================================
+   🎮 GAME SPECIFIC STYLES
+   ========================================== */
+
+.game-container {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--glass-shadow), 0 0 40px rgba(184, 76, 255, 0.2);
+    padding: var(--space-2xl);
+    margin: var(--space-xl) auto;
+    max-width: 1200px;
+}
+
+.chat-message {
+    background: rgba(31, 31, 71, 0.3);
+    backdrop-filter: blur(8px);
+    border-left: 3px solid var(--color-primary);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    margin: var(--space-sm) 0;
+}
+
+input,
+textarea,
+select {
+    background: rgba(31, 31, 71, 0.4);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    color: var(--color-text-primary);
+    transition: all var(--transition-base);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    background: rgba(31, 31, 71, 0.6);
+    border-color: var(--color-primary);
+    outline: none;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--color-text-tertiary);
+}
