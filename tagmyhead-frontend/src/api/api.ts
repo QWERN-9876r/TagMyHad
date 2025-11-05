@@ -11,8 +11,8 @@ export class API {
         return res.json()
     }
 
-    static async getRoom(code: string): Promise<Room> {
-        const res = await fetch(`${API_BASE}/room/${code}`)
+    static async getRoom(code: string, playerId: string): Promise<Room> {
+        const res = await fetch(`${API_BASE}/room/${code}?playerId=${playerId}`)
         if (!res.ok) throw new Error('Room not found')
         return res.json()
     }

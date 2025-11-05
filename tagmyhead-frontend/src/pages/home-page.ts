@@ -69,7 +69,7 @@ export class HomePage extends LitElement {
         this.requestUpdate()
 
         try {
-            const room = await API.getRoom(code)
+            const room = await API.getRoom(code, '')
 
             if (room.started) {
                 this.error = 'This game has already started'

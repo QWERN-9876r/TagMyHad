@@ -54,7 +54,7 @@ export class LobbyPage extends LitElement {
 
     async loadRoom() {
         try {
-            this.room = await API.getRoom(this.roomCode)
+            this.room = await API.getRoom(this.roomCode, this.playerId)
 
             // Проверяем что мы все еще в комнате
             const isInRoom = this.room.players.some(

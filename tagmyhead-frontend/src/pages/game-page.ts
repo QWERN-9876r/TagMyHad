@@ -120,7 +120,7 @@ export class GamePage extends LitElement {
 
     async loadRoomAndConnect() {
         try {
-            this.room = await API.getRoom(this.roomCode)
+            this.room = await API.getRoom(this.roomCode, this.playerId)
 
             this.messages = this.room.messages
 
@@ -190,7 +190,7 @@ export class GamePage extends LitElement {
 
     async refreshRoom() {
         try {
-            this.room = await API.getRoom(this.roomCode)
+            this.room = await API.getRoom(this.roomCode, this.playerId)
 
             this.messages = this.room.messages
 
