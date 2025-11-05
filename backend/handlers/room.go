@@ -22,6 +22,8 @@ func CreateRoom(c echo.Context) error {
 // GET /api/room/:code
 func GetRoom(c echo.Context) error {
 	code := c.Param("code")
+	query := c.QueryParams()
+	playerId := query.Get("playerId")
 	room, exists := models.GetRoom(code)
 
 	if !exists {
@@ -30,12 +32,22 @@ func GetRoom(c echo.Context) error {
 		})
 	}
 
+	messages := make([]models.WSMessage, len(room.Messages))
+
+	for _, message := range room.Messages {
+		if message.Type == "set_character" && message.PlayerID == playerId {
+			continue
+		}
+
+		messages = append(messages, message)
+	}
+
 	return c.JSON(http.StatusOK, models.Room{
 		Code: room.Code,
 		Players: room.Players,
 		Started: room.Started,
 		Characters: room.Characters,
-		Messages: room.Messages,
+		Messages: messages,
 	})
 }
 
