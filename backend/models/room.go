@@ -55,8 +55,6 @@ var (
 	mu    sync.RWMutex
 )
 
-
-
 // Генерация кода комнаты
 func GenerateRoomCode() string {
 	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -146,11 +144,11 @@ func (r *Room) StartGame() {
 
 	for i, player := range r.Players {
 		if i + 1 == len(r.Players) {
-			r.WhoMakeFor[r.Players[0].ID] = player
+			r.WhoMakeFor[player.ID] = r.Players[0]
 			continue
 		}
 
-		r.WhoMakeFor[r.Players[i + 1].ID] = player
+		r.WhoMakeFor[player.ID] = r.Players[i + 1]
 	}
 
 	r.Started = true
