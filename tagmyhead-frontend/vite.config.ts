@@ -13,11 +13,11 @@ export default defineConfig({
     // server: {
     //     proxy: {
     //         '/api': {
-    //             target: 'http://89.169.151.181:8080',
+    //             target: 'https://158.160.97.248:8080',
     //             changeOrigin: true,
     //         },
     //         '/ws': {
-    //             target: 'ws://89.169.151.181:8080',
+    //             target: 'wss://158.160.97.248/:8080',
     //             ws: true,
     //             changeOrigin: true,
     //         },
