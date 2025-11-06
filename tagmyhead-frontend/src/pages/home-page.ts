@@ -1,4 +1,4 @@
-import { LitElement, html } from 'lit'
+import { LitElement, css, html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 import { API } from '../api/api'
 
@@ -97,7 +97,14 @@ export class HomePage extends LitElement {
         return html`
             <app-container>
                 <app-card>
-                    <app-text variant="h1">TagMyHead</app-text>
+                    <app-text variant="h1">
+                        <app-image
+                            width="50px"
+                            src="icon.webp"
+                            alt=""
+                        ></app-image>
+                        TagMyHead</app-text
+                    >
                     <app-text variant="subtitle" color="secondary">
                         Guess who you are by asking yes/no questions!<br />
                         A social deduction game for 2+ players.
