@@ -8,11 +8,28 @@ export class AppAlert extends LitElement {
         | 'success'
         | 'warning'
         | 'info' = 'info'
+    @property({ type: Boolean, attribute: 'animated' }) animated = false
 
     static styles = css`
         :host {
             display: block;
             margin: var(--space-md) 0;
+        }
+
+        @keyframes slideIn {
+            0% {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        :host([animated]) .alert {
+            animation: slideIn 1s;
         }
 
         .alert {

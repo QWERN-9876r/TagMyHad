@@ -8,7 +8,9 @@ export class AppBadge extends LitElement {
 
     static styles = css`
         :host {
-            display: inline-block;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .badge {

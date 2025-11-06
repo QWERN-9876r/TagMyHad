@@ -18,8 +18,6 @@ export class API {
     }
 
     static async joinRoom(code: string, name: string): Promise<Player> {
-        console.log('Joining room:', { code, name }) // Debug log
-
         const res = await fetch(`${API_BASE}/room/${code}/join`, {
             method: 'POST',
             headers: {
@@ -29,16 +27,13 @@ export class API {
             body: JSON.stringify({ name }),
         })
 
-        console.log('Join response status:', res.status) // Debug log
-
         if (!res.ok) {
             const error = await res.json()
-            console.error('Join error:', error) // Debug log
             throw new Error(error.error || 'Failed to join room')
         }
 
         const player = await res.json()
-        console.log('Player joined:', player) // Debug log
+
         return player
     }
 

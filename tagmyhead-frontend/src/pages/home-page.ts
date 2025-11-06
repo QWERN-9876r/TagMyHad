@@ -80,11 +80,10 @@ export class HomePage extends LitElement {
 
             localStorage.setItem('playerName', name)
 
-            const player = await API.joinRoom(code, name)
-
-            localStorage.setItem('playerId', player.id)
-
-            navigate(`/room/${code}`)
+            API.joinRoom(code, name).then(({ id }) => {
+                localStorage.setItem('playerId', id)
+                navigate(`/room/${code}`)
+            })
         } catch (err) {
             console.error('Error:', err)
             this.error = err instanceof Error ? err.message : 'Room not found'
@@ -103,7 +102,10 @@ export class HomePage extends LitElement {
                             src="icon.webp"
                             alt=""
                         ></app-image>
-                        TagMyHead</app-text
+                        TagMyHead
+                        <app-badge variant="secondary"
+                            >beta</app-badge
+                        ></app-text
                     >
                     <app-text variant="subtitle" color="secondary">
                         Guess who you are by asking yes/no questions!<br />
@@ -112,7 +114,7 @@ export class HomePage extends LitElement {
 
                     ${this.error
                         ? html`
-                              <app-alert variant="error">
+                              <app-alert animated variant="error">
                                   ${this.error}
                               </app-alert>
                           `
