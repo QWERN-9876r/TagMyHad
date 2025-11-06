@@ -115,7 +115,6 @@ export class GamePage extends LitElement {
 
     disconnectedCallback() {
         super.disconnectedCallback()
-        this.ws?.close()
     }
 
     async loadRoomAndConnect() {
