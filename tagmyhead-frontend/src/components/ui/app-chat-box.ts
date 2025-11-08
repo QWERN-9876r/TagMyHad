@@ -3,6 +3,7 @@ import { customElement, property, state, query } from 'lit/decorators.js'
 import type { WSMessage } from '../../types'
 import './app-chat-message'
 import { repeat } from 'lit/directives/repeat.js'
+import { hash } from '../../utils/hash'
 
 @customElement('app-chat-box')
 export class AppChatBox extends LitElement {
@@ -154,19 +155,24 @@ export class AppChatBox extends LitElement {
                         : ''}
                     ${repeat(
                         this.messages,
-                        (_, i) => i,
-                        (msg) => html`
-                            <app-chat-message
-                                type=${msg.type}
-                                playerName=${msg.player_name || ''}
-                                text=${msg.text || ''}
-                                character=${msg.character || ''}
-                                ?correct=${msg.correct || false}
-                                timestamp=${msg.timestamp}
-                                playerId=${msg.player_id}
-                                ?isYour=${msg.player_id === this.playerId}
-                            ></app-chat-message>
-                        `
+                        (msg) => hash(msg),
+                        (msg) =>
+                            msg.text
+                                ? html`
+                                      <app-chat-message
+                                          id=${hash(msg)}
+                                          type=${msg.type}
+                                          playerName=${msg.player_name || ''}
+                                          text=${msg.text || ''}
+                                          character=${msg.character || ''}
+                                          ?correct=${msg.correct || false}
+                                          timestamp=${msg.timestamp}
+                                          playerId=${msg.player_id}
+                                          ?isYour=${msg.player_id ===
+                                          this.playerId}
+                                      ></app-chat-message>
+                                  `
+                                : null
                     )}
                 </div>
 

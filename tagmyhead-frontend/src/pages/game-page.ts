@@ -125,11 +125,6 @@ export class GamePage extends LitElement {
 
             this.messages = this.room.messages
 
-            if (!this.room.started) {
-                navigate(`/room/${this.roomCode}`)
-                return
-            }
-
             this.ws = new GameWebSocket()
             await this.ws.connect(this.roomCode, this.playerId)
 
@@ -144,8 +139,6 @@ export class GamePage extends LitElement {
                 if (!msg.type || msg.type === 'game_state') return
 
                 if (msg.type === 'set_character') {
-                    if (msg.player_id === this.playerId) return
-
                     if (this.room) {
                         this.room.characters[msg.player_id] = msg.character!
                     }

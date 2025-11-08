@@ -69,7 +69,6 @@ export class LobbyPage extends LitElement {
                 return
             }
 
-            // Если игра началась, переходим на игровую страницу
             if (this.room.started) {
                 if (this.pollInterval) {
                     clearInterval(this.pollInterval)
@@ -94,6 +93,9 @@ export class LobbyPage extends LitElement {
 
         try {
             await API.startGame(this.roomCode)
+
+            console.log('start')
+
             navigate(`/room/${this.roomCode}/game`)
         } catch (err) {
             this.error =

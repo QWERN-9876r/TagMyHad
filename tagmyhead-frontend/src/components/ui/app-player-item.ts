@@ -22,7 +22,20 @@ export class AppPlayerItem extends LitElement {
             border-color: var(--color-success);
         }
 
+        @keyframes show {
+            0% {
+                transform: scale(1.2);
+                opacity: 0;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
         .player-item {
+            box-sizing: border-box;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -31,6 +44,7 @@ export class AppPlayerItem extends LitElement {
             border: 1px solid var(--color-border);
             border-radius: var(--radius-md);
             transition: all var(--transition-base);
+            height: 66px;
         }
 
         .player-item:hover {
@@ -63,7 +77,7 @@ export class AppPlayerItem extends LitElement {
                         ? html`<app-badge variant="primary">You</app-badge>`
                         : ''}
                 </div>
-                ${this.character && !this.isYou
+                ${this.character
                     ? html`
                           <app-badge variant="secondary"
                               >${this.character}</app-badge

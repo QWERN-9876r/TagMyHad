@@ -57,6 +57,8 @@ func WebSocketHandler(c echo.Context) error {
 	}
 	defer ws.Close()
 
+	
+
 	// Добавляем соединение
 	room.AddConnection(playerID, ws)
 	defer room.RemoveConnection(playerID)

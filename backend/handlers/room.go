@@ -66,12 +66,6 @@ func JoinRoom(c echo.Context) error {
 		})
 	}
 
-	if room.Started {
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"error": "Game already started",
-		})
-	}
-
 	var req JoinRoomRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, map[string]string{

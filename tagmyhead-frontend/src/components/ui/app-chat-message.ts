@@ -4,6 +4,7 @@ import { customElement, property, state } from 'lit/decorators.js'
 import '../icons/icon-check'
 import '../icons/icon-close'
 import { classMap } from 'lit/directives/class-map.js'
+import { hasAnswer, saveAnswer } from '../../utils/saveAnswer'
 
 @customElement('app-chat-message')
 export class AppChatMessage extends LitElement {
@@ -27,6 +28,7 @@ export class AppChatMessage extends LitElement {
     @property({ type: Boolean }) correct = false
     @property({ type: Number }) timestamp = 0
     @property({ type: Boolean }) isYour = false
+    @property({ type: String }) id = ''
     @state() shouldShowActionButtons = false
 
     static styles = css`
@@ -145,8 +147,8 @@ export class AppChatMessage extends LitElement {
 
         .answer_buttons button {
             position: relative;
-            width: 44px;
-            height: 44px;
+            width: 40px;
+            height: 40px;
             border-radius: var(--radius-lg);
             border: none;
             cursor: pointer;
@@ -249,6 +251,8 @@ export class AppChatMessage extends LitElement {
         this.shouldShowActionButtons = false
         this.correct = true
 
+        saveAnswer(this.id)
+
         this.dispatchEvent(
             new CustomEvent('success-answer', {
                 bubbles: true,
@@ -271,7 +275,8 @@ export class AppChatMessage extends LitElement {
     connectedCallback(): void {
         super.connectedCallback()
 
-        this.shouldShowActionButtons = this.type === 'answer' && !this.isYour
+        this.shouldShowActionButtons =
+            this.type === 'answer' && !this.isYour && !hasAnswer(this.id)
     }
 
     render() {
