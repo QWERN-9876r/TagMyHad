@@ -15,6 +15,10 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+type Pong struct {
+	Type string `json:"type"`
+}
+
 // GET /ws/:code/:playerId
 func WebSocketHandler(c echo.Context) error {
 	roomCode := c.Param("code")
@@ -99,6 +103,9 @@ func WebSocketHandler(c echo.Context) error {
 
 		// Обрабатываем разные типы сообщений
 		switch msg.Type {
+		case "ping":
+			ws.WriteJSON(Pong{Type: "pong"})
+
 		case "set_character":
 			room.SetCharacter(msg)
 

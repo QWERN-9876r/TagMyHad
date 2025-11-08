@@ -115,7 +115,33 @@ func (r *Room) findPlayerById(playerId string) int {
 func (r* Room) sendMessageToAll(msg WSMessage) {
 	r.Messages = append(r.Messages, msg)
 
-	for _, conn := range r.Connections {
+	for _, player := range r.Players {
+		conn := r.Connections[player.ID]
+
+		go func(c *websocket.Conn) {
+			c.WriteJSON(msg)
+		}(conn)
+	}
+}
+
+func (r* Room) sendMessageToAllWithExceptions(msg WSMessage, exceptions []string) {
+	r.Messages = append(r.Messages, msg)
+
+	for _, player := range r.Players {
+		conn := r.Connections[player.ID]
+		needSkip := false
+
+		for _, playerId := range exceptions {
+			if playerId == player.ID {
+				needSkip = true
+				break
+			}
+		}
+
+		if (needSkip) {
+			continue
+		}
+
 		go func(c *websocket.Conn) {
 			c.WriteJSON(msg)
 		}(conn)
@@ -169,7 +195,11 @@ func (r *Room) SetCharacter(msg WSMessage) {
 	msg.Timestamp = time.Now().Unix()
 	msg.Type = "set_character"
 
-	r.sendMessageToAll(msg)
+	r.sendMessageToAllWithExceptions(msg, []string {characterFor.ID})
+
+	msg.Character = "_"
+
+	r.SendToPlayer(characterFor.ID, msg)
 }
 
 func (r *Room) AddWinner(msg WSMessage) {
