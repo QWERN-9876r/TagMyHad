@@ -86,6 +86,13 @@ func JoinRoom(c echo.Context) error {
 	}
 
 	player := room.AddPlayer(req.Name)
+
+	if player == nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "There is already a user named " + req.Name,
+		})
+	}
+
 	return c.JSON(http.StatusOK, player)
 }
 

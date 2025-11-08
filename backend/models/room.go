@@ -27,6 +27,7 @@ type Room struct {
 	// WebSocket connections
 	Connections map[string]*websocket.Conn `json:"-"` // playerId -> connection
 	connMu      sync.RWMutex
+	dataMu     sync.RWMutex
 }
 
 // WebSocket message types
@@ -113,19 +114,31 @@ func (r *Room) findPlayerById(playerId string) int {
 }
 
 func (r* Room) sendMessageToAll(msg WSMessage) {
+	r.connMu.Lock()
+	defer r.connMu.Unlock()
+
+	msg.Timestamp = time.Now().Unix()
+
 	r.Messages = append(r.Messages, msg)
 
 	for _, player := range r.Players {
 		conn := r.Connections[player.ID]
 
-		go func(c *websocket.Conn) {
-			c.WriteJSON(msg)
-		}(conn)
+		if conn != nil {
+			go func(c *websocket.Conn) {
+				c.WriteJSON(msg)
+			}(conn)
+		}
 	}
 }
 
 func (r* Room) sendMessageToAllWithExceptions(msg WSMessage, exceptions []string) {
 	r.Messages = append(r.Messages, msg)
+
+	r.connMu.Lock()
+	defer r.connMu.Unlock()
+
+	msg.Timestamp = time.Now().Unix()
 
 	for _, player := range r.Players {
 		conn := r.Connections[player.ID]
@@ -138,7 +151,9 @@ func (r* Room) sendMessageToAllWithExceptions(msg WSMessage, exceptions []string
 			}
 		}
 
-		if (needSkip) {
+		println("\n\n\n\n\n\n\n", needSkip, conn, exceptions, "\n\n\n\n\n\n\n")
+
+		if (needSkip || conn == nil) {
 			continue
 		}
 
@@ -149,17 +164,25 @@ func (r* Room) sendMessageToAllWithExceptions(msg WSMessage, exceptions []string
 }
 
 // Добавить игрока
-func (r *Room) AddPlayer(name string) Player {
+func (r *Room) AddPlayer(name string) *Player {
 	mu.Lock()
 	defer mu.Unlock()
+
+	for _, player := range r.Players {
+		if player.Name == name {
+			return nil
+		}
+	}
 
 	player := Player{
 		ID:   GenerateRoomCode(),
 		Name: name,
 		IsWinner: false,
 	}
+
 	r.Players = append(r.Players, player)
-	return player
+
+	return &player
 }
 
 // Начать игру
@@ -184,38 +207,46 @@ func (r *Room) StartGame() {
 }
 
 func (r *Room) SetCharacter(msg WSMessage) {
-	characterFor := r.WhoMakeFor[msg.PlayerID]
-	r.Characters[characterFor.ID] = msg.Character
+	r.dataMu.Lock()
 
-	r.connMu.RLock()
-	defer r.connMu.RUnlock()
+    characterFor := r.WhoMakeFor[msg.PlayerID]
+    r.Characters[characterFor.ID] = msg.Character
 
-	msg.Text = characterFor.Name + " is a " + msg.Character
-	msg.PlayerID = characterFor.ID
-	msg.Timestamp = time.Now().Unix()
-	msg.Type = "set_character"
+	r.dataMu.Unlock()
 
-	r.sendMessageToAllWithExceptions(msg, []string {characterFor.ID})
+    msg.Text = characterFor.Name + " is a " + msg.Character
+    msg.PlayerID = characterFor.ID
+    msg.Timestamp = time.Now().Unix()
+    msg.Type = "set_character"
 
-	msg.Character = "_"
+    r.sendMessageToAllWithExceptions(msg, []string{characterFor.ID})
 
-	r.SendToPlayer(characterFor.ID, msg)
+    msg.Character = "?"
+
+    r.SendToPlayer(characterFor.ID, msg)
 }
+
 
 func (r *Room) AddWinner(msg WSMessage) {
-	playerIndex := r.findPlayerById(msg.WinnerID)
-	player := r.Players[playerIndex]
+    playerIndex := r.findPlayerById(msg.WinnerID)
+    
+    if playerIndex == -1 {
+        return
+    }
+    
+    player := &r.Players[playerIndex]
 
-	if (player.IsWinner) {
-		return
-	}
+    if player.IsWinner {
+        return
+    }
 
-	player.IsWinner = true
+    player.IsWinner = true
 
-	msg.Text = r.Players[playerIndex].Name + " won"
+    msg.Text = r.Players[playerIndex].Name + " won"
 
-	r.sendMessageToAll(msg)
+    r.sendMessageToAll(msg)
 }
+
 
 // Добавить WebSocket соединение
 func (r *Room) AddConnection(playerID string, conn *websocket.Conn) {
@@ -236,11 +267,6 @@ func (r *Room) RemoveConnection(playerID string) {
 
 // Broadcast сообщение всем в комнате
 func (r *Room) Broadcast(msg WSMessage) {
-	r.connMu.RLock()
-	defer r.connMu.RUnlock()
-
-	msg.Timestamp = time.Now().Unix()
-
 	r.sendMessageToAll(msg)
 }
 
@@ -260,8 +286,8 @@ func (r *Room) SendToPlayer(playerID string, msg WSMessage) {
 
 // Получить игровое состояние для конкретного игрока
 func (r *Room) GetGameStateForPlayer(playerID string) GameState {
-	mu.RLock()
-	defer mu.RUnlock()
+	r.dataMu.RLock()
+    defer r.dataMu.RUnlock()
 
 	userIndex := 0
 
