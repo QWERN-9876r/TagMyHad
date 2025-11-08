@@ -5,6 +5,10 @@ type MessageHandler = (msg: WSMessage | GameState) => void
 export class GameWebSocket {
     private ws: WebSocket | null = null
     private listeners: Map<string, Set<MessageHandler>> = new Map()
+    private heartbeatInterval: number | null = null
+    private reconnectTimeout: number | null = null
+    private reconnectAttempts = 0
+    private maxReconnectAttempts = 5
 
     connect(roomCode: string, playerId: string): Promise<void> {
         return new Promise((resolve, reject) => {
@@ -18,6 +22,7 @@ export class GameWebSocket {
 
             this.ws.onopen = () => {
                 console.log('WebSocket connected')
+                this.startHeartbeat()
                 resolve()
             }
 
@@ -30,6 +35,11 @@ export class GameWebSocket {
                 try {
                     const msg: WSMessage = JSON.parse(event.data)
                     console.log('Received message:', msg)
+
+                    if (msg.type === 'pong') {
+                        return
+                    }
+
                     this.emit(msg.type, msg)
                     this.emit('*', msg)
                 } catch (err) {
@@ -39,9 +49,51 @@ export class GameWebSocket {
 
             this.ws.onclose = () => {
                 console.log('WebSocket closed')
+                this.stopHeartbeat()
                 this.emit('close', {} as WSMessage)
+
+                if (this.reconnectAttempts < this.maxReconnectAttempts) {
+                    this.scheduleReconnect(roomCode, playerId)
+                }
             }
         })
+    }
+
+    private startHeartbeat() {
+        this.stopHeartbeat()
+        this.heartbeatInterval = setInterval(() => {
+            if (this.ws?.readyState === WebSocket.OPEN) {
+                this.send('ping')
+            }
+        }, 30000)
+    }
+
+    private stopHeartbeat() {
+        if (this.heartbeatInterval) {
+            clearInterval(this.heartbeatInterval)
+            this.heartbeatInterval = null
+        }
+    }
+
+    private scheduleReconnect(roomCode: string, playerId: string) {
+        if (this.reconnectTimeout) {
+            clearTimeout(this.reconnectTimeout)
+        }
+
+        const delay = Math.min(
+            1000 * Math.pow(2, this.reconnectAttempts),
+            10000
+        )
+        console.log(
+            `Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts + 1})`
+        )
+
+        this.reconnectTimeout = window.setTimeout(() => {
+            this.reconnectAttempts++
+            this.connect(roomCode, playerId).catch((err) => {
+                console.error('Reconnect failed:', err)
+            })
+        }, delay)
     }
 
     on(type: string, callback: MessageHandler) {

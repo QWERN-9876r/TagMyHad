@@ -24,6 +24,7 @@ export interface GameState {
 
 export interface WSMessage {
     type:
+        | 'pong'
         | 'join'
         | 'leave'
         | 'chat'
