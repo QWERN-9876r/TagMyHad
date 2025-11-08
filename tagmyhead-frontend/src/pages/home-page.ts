@@ -3,6 +3,7 @@ import { customElement, state } from 'lit/decorators.js'
 import { API } from '../api/api'
 
 import { navigate } from '../router'
+import { toggleDevMode } from '../utils/isDev'
 
 @customElement('home-page')
 export class HomePage extends LitElement {
@@ -96,17 +97,19 @@ export class HomePage extends LitElement {
         return html`
             <app-container>
                 <app-card>
-                    <app-text variant="h1">
-                        <app-image
-                            width="50px"
-                            src="icon.webp"
-                            alt=""
-                        ></app-image>
-                        TagMyHead
-                        <app-badge variant="secondary"
-                            >beta</app-badge
-                        ></app-text
-                    >
+                    <empty-button @dblclick=${toggleDevMode}>
+                        <app-text variant="h1">
+                            <app-image
+                                width="50px"
+                                src="icon.webp"
+                                alt=""
+                            ></app-image>
+                            TagMyHead
+                            <app-badge variant="secondary"
+                                >beta</app-badge
+                            ></app-text
+                        >
+                    </empty-button>
                     <app-text variant="subtitle" color="secondary">
                         Guess who you are by asking yes/no questions!<br />
                         A social deduction game for 2+ players.

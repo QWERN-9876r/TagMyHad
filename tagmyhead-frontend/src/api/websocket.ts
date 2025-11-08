@@ -1,4 +1,5 @@
 import type { GameState, WSMessage } from '../types'
+import { log } from '../utils/log'
 
 type MessageHandler = (msg: WSMessage | GameState) => void
 
@@ -17,11 +18,11 @@ export class GameWebSocket {
             const host = window.location.host
             const url = `${protocol}//${host}/ws/${roomCode}/${playerId}`
 
-            console.log('Connecting to WebSocket:', url)
+            log('Connecting to WebSocket:', url)
             this.ws = new WebSocket(url)
 
             this.ws.onopen = () => {
-                console.log('WebSocket connected')
+                log('WebSocket connected')
                 this.startHeartbeat()
                 resolve()
             }
@@ -34,7 +35,7 @@ export class GameWebSocket {
             this.ws.onmessage = (event) => {
                 try {
                     const msg: WSMessage = JSON.parse(event.data)
-                    console.log('Received message:', msg)
+                    log('Received message:', msg)
 
                     if (msg.type === 'pong') {
                         return
@@ -48,7 +49,7 @@ export class GameWebSocket {
             }
 
             this.ws.onclose = () => {
-                console.log('WebSocket closed')
+                log('WebSocket closed')
                 this.stopHeartbeat()
                 this.emit('close', {} as WSMessage)
 
@@ -84,7 +85,7 @@ export class GameWebSocket {
             1000 * Math.pow(2, this.reconnectAttempts),
             10000
         )
-        console.log(
+        log(
             `Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts + 1})`
         )
 
@@ -120,7 +121,7 @@ export class GameWebSocket {
     send(type: string, data: Partial<WSMessage> = {}) {
         if (this.ws?.readyState === WebSocket.OPEN) {
             this.ws.send(JSON.stringify({ type, ...data }))
-            console.log(JSON.stringify({ type, ...data }))
+            log(JSON.stringify({ type, ...data }))
         }
     }
 

@@ -4,6 +4,7 @@ import { GameWebSocket } from '../api/websocket'
 import { API } from '../api/api'
 import type { Room, WSMessage } from '../types'
 import { navigate } from '../router'
+import { log } from '../utils/log'
 
 interface RouteContext {
     params: {
@@ -246,7 +247,7 @@ export class GamePage extends LitElement {
     }
 
     private handleSuccessAnswer({ detail: { playerId } }: CustomEvent) {
-        console.log(playerId)
+        log(playerId)
 
         this.ws?.addWinner(playerId)
     }
