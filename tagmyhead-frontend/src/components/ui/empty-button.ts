@@ -9,6 +9,7 @@ export class EmptyButton extends LitElement {
             border: none;
             cursor: pointer;
             box-shadow: none;
+            font-family: var(--font-family);
         }
     `
 
