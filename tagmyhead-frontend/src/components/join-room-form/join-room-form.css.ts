@@ -7,11 +7,15 @@ export const joinRoomFormStyles = css`
     }
 
     .join-form-container {
-        min-height: 100vh;
+        position: fixed;
+        inset-inline-start: 0;
+        inset-block-start: 0;
+        width: 100%;
+        height: 100%;
+
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: var(--space-lg);
     }
 
     .join-form-card {
@@ -27,6 +31,20 @@ export const joinRoomFormStyles = css`
         animation: slideUp 0.5s ease-out;
     }
 
+    @media (max-width: 768px) {
+        .join-form-card {
+            background: none;
+            backdrop-filter: none;
+            -webkit-backdrop-filter: none;
+            border: none;
+            border-radius: 0;
+            box-shadow: none;
+            padding: var(--space-xl);
+            max-width: none;
+            width: 100%;
+            animation: slideUp 0.5s ease-out;
+        }
+    }
     @keyframes slideUp {
         from {
             opacity: 0;
