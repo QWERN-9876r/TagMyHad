@@ -11,8 +11,7 @@
         {
             "src": "/icon.webp",
             "sizes": "512x512",
-            "type": "image/webp",
-            "purpose": "any maskable"
+            "type": "image/webp"
         }
     ],
     "categories": ["games", "entertainment", "social"],
