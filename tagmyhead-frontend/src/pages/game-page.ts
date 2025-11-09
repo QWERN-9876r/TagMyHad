@@ -172,6 +172,14 @@ export class GamePage extends LitElement {
                 ).character!
             })
 
+            this.ws.on('player_left', async (msg) => {
+                if (!this.room) return
+
+                this.room.players = this.room.players.filter(
+                    ({ id }) => (msg as WSMessage).player_id !== id
+                )
+            })
+
             this.loading = false
             this.requestUpdate()
         } catch (err) {
@@ -245,6 +253,18 @@ export class GamePage extends LitElement {
         this.ws?.addWinner(playerId)
     }
 
+    private handleRemovePlayer(e: CustomEvent) {
+        const playerId = e.detail.id
+        const playerName = e.detail.name
+
+        log('Removing player:', playerName)
+
+        if (confirm(`Remove player ${playerName}?`)) {
+            this.ws?.send('remove_player', { player_id: playerId })
+            this.refreshRoom()
+        }
+    }
+
     render() {
         if (this.loading) {
             return html`
@@ -307,11 +327,12 @@ export class GamePage extends LitElement {
                                 >
                             </app-text>
 
-                            <div>
+                            <div @remove-player=${this.handleRemovePlayer}>
                                 ${this.room.players.map(
                                     (player) => html`
                                         <app-player-item
                                             name=${player.name}
+                                            id=${player.id}
                                             ?isYou=${player.id ===
                                             this.playerId}
                                             character=${this.characters[

@@ -3,9 +3,10 @@ import { customElement, state } from 'lit/decorators.js'
 import { API } from '../api/api'
 import { GameWebSocket } from '../api/websocket'
 import { navigate } from '../router'
-import type { Room } from '../types'
+import type { Room, WSMessage } from '../types'
 
 import '../components/join-room-form'
+import { log } from '../utils/log'
 
 interface RouteContext {
     params: {
@@ -138,8 +139,12 @@ export class LobbyPage extends LitElement {
                 await this.loadRoom()
             })
 
-            this.ws.on('leave', async () => {
-                await this.loadRoom()
+            this.ws.on('player_left', async (msg) => {
+                if (!this.room) return
+
+                this.room.players = this.room.players.filter(
+                    ({ id }) => (msg as WSMessage).player_id !== id
+                )
             })
         } catch (err) {
             console.error('WebSocket connection failed:', err)
@@ -208,6 +213,18 @@ export class LobbyPage extends LitElement {
         navigate('/')
     }
 
+    private handleRemovePlayer(e: CustomEvent) {
+        const playerId = e.detail.id
+        const playerName = e.detail.name
+
+        log('Removing player:', playerName)
+
+        if (confirm(`Remove player ${playerName}?`)) {
+            this.ws?.send('remove_player', { player_id: playerId })
+            this.loadRoom()
+        }
+    }
+
     render() {
         if (this.showNameForm) {
             return html`
@@ -272,11 +289,12 @@ export class LobbyPage extends LitElement {
                         >
                     </app-text>
 
-                    <div>
+                    <div @remove-player=${this.handleRemovePlayer}>
                         ${this.room.players.map(
                             (player) => html`
                                 <app-player-item
                                     name=${player.name}
+                                    id=${player.id}
                                     ?isYou=${player.id === this.playerId}
                                 ></app-player-item>
                             `

@@ -52,38 +52,24 @@ func NewPlayerConnection(conn *websocket.Conn, player *Player, room *Room) *Play
 }
 
 func (pc *PlayerConnection) writePump() {
-	ticker := time.NewTicker(30 * time.Second)
-	defer func() {
-		ticker.Stop()
-		pc.conn.Close()
-	}()
+    defer func() {
+        pc.conn.Close()
+    }()
 
-	for {
-		select {
-		case message, ok := <-pc.send:
-			if !ok {
-				pc.conn.WriteMessage(websocket.CloseMessage, []byte{})
-				return
-			}
+    for message := range pc.send {
+        pc.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+        
+        if err := pc.conn.WriteJSON(message); err != nil {
+            log.Printf("Error writing to %s: %v", pc.player.Name, err)
+            return
+        }
+    }
 
-			pc.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-			if err := pc.conn.WriteJSON(message); err != nil {
-				log.Printf("Error writing to %s: %v", pc.player.Name, err)
-				return
-			}
-
-		case <-ticker.C:
-			pc.conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-			if err := pc.conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				return
-			}
-		}
-	}
+    pc.conn.WriteMessage(websocket.CloseMessage, []byte{})
 }
 
 func (pc *PlayerConnection) readPump() {
 	defer func() {
-		pc.room.RemoveConnection(pc.player.ID)
 		pc.conn.Close()
 	}()
 
@@ -266,6 +252,54 @@ func (r *Room) AddPlayer(name string) *Player {
 
 	r.Players = append(r.Players, player)
 	return &player
+}
+
+func (r *Room) RemovePlayer(playerID string) bool {
+	r.dataMu.Lock()
+	defer r.dataMu.Unlock()
+
+	playerIndex := r.findPlayerById(playerID)
+	if playerIndex == -1 {
+		log.Printf("⚠️ Player %s not found in room %s", playerID, r.Code)
+		return false
+	}
+
+	r.Players = append(r.Players[:playerIndex], r.Players[playerIndex+1:]...)
+
+	delete(r.Characters, playerID)
+
+	delete(r.WhoMakeFor, playerID)
+
+	for pid, targetPlayer := range r.WhoMakeFor {
+		if targetPlayer.ID == playerID {
+			delete(r.WhoMakeFor, pid)
+		}
+	}
+
+	return true
+}
+
+func (r *Room) RemovePlayerWithNotification(playerID string) bool {
+	player := r.GetPlayer(playerID)
+	if player == nil {
+		return false
+	}
+	playerName := player.Name
+
+	if !r.RemovePlayer(playerID) {
+		return false
+	}
+
+	r.RemoveConnection(playerID)
+
+	r.sendMessageToAll(WSMessage{
+		Type:       "player_left",
+		PlayerID:   playerID,
+		PlayerName: playerName,
+		Text:       playerName + " left the room",
+	})
+
+	return true
 }
 
 // Начать игру

@@ -142,6 +142,8 @@ func WebSocketHandler(c echo.Context) error {
 				PlayerName: playerName,
 				Text:       msg.Text,
 			})
+		case "remove_player":
+			room.RemovePlayerWithNotification(msg.PlayerID)
 
 		default:
 			log.Printf("Unknown message type: %s", msg.Type)
