@@ -61,11 +61,8 @@ export class AppRoomCode extends LitElement {
 
     private async handleClick() {
         try {
-            try {
-                await navigator.clipboard.writeText(this.code)
-            } catch {
-                document.execCommand(this.code)
-            }
+            await navigator.clipboard.writeText(location.href)
+
             this.copied = true
             setTimeout(() => {
                 this.copied = false

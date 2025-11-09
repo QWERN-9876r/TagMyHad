@@ -4,7 +4,8 @@ import { API } from '../api/api'
 import { GameWebSocket } from '../api/websocket'
 import { navigate } from '../router'
 import type { Room } from '../types'
-import { log } from '../utils/log'
+
+import '../components/join-room-form'
 
 interface RouteContext {
     params: {
@@ -19,6 +20,8 @@ export class LobbyPage extends LitElement {
     @state() playerId: string = ''
     @state() roomCode: string = ''
     @state() loading: boolean = true
+    @state() showNameForm: boolean = false
+    @state() joiningRoom: boolean = false
 
     private ws: GameWebSocket | null = null
 
@@ -29,41 +32,108 @@ export class LobbyPage extends LitElement {
     async onBeforeEnter(location: RouteContext) {
         this.roomCode = location.params.code
 
-        const playerId = localStorage.getItem('playerId')
-        const playerName = localStorage.getItem('playerName')
+        // Проверяем credentials для этой комнаты
+        let playerId = localStorage.getItem(`playerId_${this.roomCode}`)
+        let playerName = localStorage.getItem(`playerName_${this.roomCode}`)
 
         if (!playerId || !playerName) {
-            navigate('/')
+            const lastRoomCode = localStorage.getItem('lastRoomCode')
+            if (lastRoomCode === this.roomCode) {
+                playerId = localStorage.getItem('playerId')
+                playerName = localStorage.getItem('playerName')
+            }
+        }
+
+        if (!playerId || !playerName) {
+            this.loading = false
+            this.showNameForm = true
+            this.requestUpdate()
             return
         }
 
         this.playerId = playerId
-        await this.loadRoom()
 
-        // ✅ Подключаем WebSocket
-        await this.connectWebSocket()
+        try {
+            await this.loadRoom()
 
-        this.loading = false
+            if (this.error === 'You are not in this room') {
+                this.error = ''
+                this.loading = false
+                this.showNameForm = true
+                this.requestUpdate()
+                return
+            }
+
+            await this.connectWebSocket()
+        } catch (err) {
+            this.error = ''
+            this.loading = false
+            this.showNameForm = true
+            this.requestUpdate()
+        } finally {
+            this.loading = false
+            this.requestUpdate()
+        }
     }
 
     disconnectedCallback() {
         super.disconnectedCallback()
-        // ✅ Закрываем WebSocket при уходе со страницы
         this.ws?.close()
     }
 
+    async handleJoinSubmit(e: CustomEvent) {
+        const { name } = e.detail
+
+        this.joiningRoom = true
+        this.error = ''
+        this.requestUpdate()
+
+        try {
+            const player = await API.joinRoom(this.roomCode, name)
+
+            localStorage.setItem(`playerId_${this.roomCode}`, player.id)
+            localStorage.setItem(`playerName_${this.roomCode}`, player.name)
+            localStorage.setItem('playerId', player.id)
+            localStorage.setItem('playerName', player.name)
+            localStorage.setItem('lastRoomCode', this.roomCode)
+
+            this.playerId = player.id
+            this.showNameForm = false
+            this.requestUpdate()
+
+            await this.loadRoom()
+            await this.connectWebSocket()
+        } catch (err) {
+            this.error =
+                err instanceof Error ? err.message : 'Failed to join room'
+        } finally {
+            this.joiningRoom = false
+            this.requestUpdate()
+        }
+    }
+
+    handleJoinError(e: CustomEvent) {
+        this.error = e.detail.message
+        this.requestUpdate()
+    }
+
+    handleJoinCancel() {
+        navigate('/')
+    }
+
     async connectWebSocket() {
+        if (!this.playerId || !this.roomCode) {
+            return
+        }
+
         try {
             this.ws = new GameWebSocket()
             await this.ws.connect(this.roomCode, this.playerId)
 
-            // ✅ Слушаем событие старта игры
             this.ws.on('game_started', () => {
-                log('🎮 Game started via WebSocket!')
                 navigate(`/room/${this.roomCode}/game`)
             })
 
-            // Обновляем список игроков при изменениях
             this.ws.on('join', async () => {
                 await this.loadRoom()
             })
@@ -78,24 +148,34 @@ export class LobbyPage extends LitElement {
     }
 
     async loadRoom() {
+        if (!this.roomCode || !this.playerId) {
+            return
+        }
+
         try {
             this.room = await API.getRoom(this.roomCode, this.playerId)
 
             const isInRoom = this.room.players.some(
                 (p) => p.id === this.playerId
             )
+
             if (!isInRoom) {
                 this.error = 'You are not in this room'
+                this.room = null
                 return
             }
 
-            // ✅ Проверяем started (на случай если WebSocket еще не подключен)
+            this.error = ''
+
             if (this.room.started) {
                 navigate(`/room/${this.roomCode}/game`)
             }
+
+            this.requestUpdate()
         } catch (err) {
             this.error =
                 err instanceof Error ? err.message : 'Failed to load room'
+            throw err
         }
     }
 
@@ -106,9 +186,6 @@ export class LobbyPage extends LitElement {
 
         try {
             await API.startGame(this.roomCode)
-
-            // ✅ Переход произойдет автоматически через WebSocket событие
-            log('Starting game...')
         } catch (err) {
             this.error =
                 err instanceof Error ? err.message : 'Failed to start game'
@@ -117,11 +194,34 @@ export class LobbyPage extends LitElement {
 
     handleLeaveRoom() {
         this.ws?.close()
-        localStorage.removeItem('playerId')
+
+        localStorage.removeItem(`playerId_${this.roomCode}`)
+        localStorage.removeItem(`playerName_${this.roomCode}`)
+
+        const lastRoomCode = localStorage.getItem('lastRoomCode')
+        if (lastRoomCode === this.roomCode) {
+            localStorage.removeItem('playerId')
+            localStorage.removeItem('playerName')
+            localStorage.removeItem('lastRoomCode')
+        }
+
         navigate('/')
     }
 
     render() {
+        if (this.showNameForm) {
+            return html`
+                <join-room-form
+                    roomCode=${this.roomCode}
+                    error=${this.error}
+                    ?loading=${this.joiningRoom}
+                    @submit=${this.handleJoinSubmit}
+                    @error=${this.handleJoinError}
+                    @cancel=${this.handleJoinCancel}
+                ></join-room-form>
+            `
+        }
+
         if (this.loading) {
             return html`
                 <app-container>

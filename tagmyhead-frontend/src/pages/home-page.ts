@@ -35,11 +35,11 @@ export class HomePage extends LitElement {
         try {
             const { code } = await API.createRoom()
 
-            localStorage.setItem('playerName', this.createName.trim())
+            localStorage.setItem(`playerName_${code}`, this.createName.trim())
 
             const player = await API.joinRoom(code, this.createName.trim())
 
-            localStorage.setItem('playerId', player.id)
+            localStorage.setItem(`playerId_${code}`, player.id)
 
             navigate(`/room/${code}`)
         } catch (err) {
@@ -79,10 +79,10 @@ export class HomePage extends LitElement {
                 return
             }
 
-            localStorage.setItem('playerName', name)
+            localStorage.setItem(`playerName_${code}`, name)
 
             API.joinRoom(code, name).then(({ id }) => {
-                localStorage.setItem('playerId', id)
+                localStorage.setItem(`playerId_${code}`, id)
                 navigate(`/room/${code}`)
             })
         } catch (err) {
