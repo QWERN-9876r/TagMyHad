@@ -1,0 +1,23 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://tagmyhead.ru/sitemap.xml
+
+# Common crawlers
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Yandex
+Allow: /
+
+User-agent: YandexBot
+Allow: /
+
+# Disallow paths
+Disallow: /api/
+Disallow: /ws/

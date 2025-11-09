@@ -1,0 +1,21 @@
+{
+    "name": "TagMyHead - Who Am I? Game",
+    "short_name": "TagMyHead",
+    "description": "Play the classic Who Am I? party game online with friends",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0a0a1f",
+    "theme_color": "#b84cff",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "/icon.webp",
+            "sizes": "512x512",
+            "type": "image/webp",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": ["games", "entertainment", "social"],
+    "lang": "en-US",
+    "dir": "ltr"
+}
