@@ -1,8 +1,10 @@
 import { LitElement, html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 import { API } from '../api/api'
+import { GameWebSocket } from '../api/websocket'
 import { navigate } from '../router'
 import type { Room } from '../types'
+import { log } from '../utils/log'
 
 interface RouteContext {
     params: {
@@ -18,7 +20,7 @@ export class LobbyPage extends LitElement {
     @state() roomCode: string = ''
     @state() loading: boolean = true
 
-    private pollInterval: number | null = null
+    private ws: GameWebSocket | null = null
 
     createRenderRoot() {
         return this
@@ -27,28 +29,51 @@ export class LobbyPage extends LitElement {
     async onBeforeEnter(location: RouteContext) {
         this.roomCode = location.params.code
 
-        // Проверяем что у нас есть playerId
         const playerId = localStorage.getItem('playerId')
         const playerName = localStorage.getItem('playerName')
 
         if (!playerId || !playerName) {
-            // Если нет - перенаправляем на главную
             navigate('/')
             return
         }
 
         this.playerId = playerId
         await this.loadRoom()
-        this.loading = false
 
-        // Проверяем каждые 2 секунды не началась ли игра
-        this.pollInterval = window.setInterval(() => this.loadRoom(), 2000)
+        // ✅ Подключаем WebSocket
+        await this.connectWebSocket()
+
+        this.loading = false
     }
 
     disconnectedCallback() {
         super.disconnectedCallback()
-        if (this.pollInterval) {
-            clearInterval(this.pollInterval)
+        // ✅ Закрываем WebSocket при уходе со страницы
+        this.ws?.close()
+    }
+
+    async connectWebSocket() {
+        try {
+            this.ws = new GameWebSocket()
+            await this.ws.connect(this.roomCode, this.playerId)
+
+            // ✅ Слушаем событие старта игры
+            this.ws.on('game_started', () => {
+                log('🎮 Game started via WebSocket!')
+                navigate(`/room/${this.roomCode}/game`)
+            })
+
+            // Обновляем список игроков при изменениях
+            this.ws.on('join', async () => {
+                await this.loadRoom()
+            })
+
+            this.ws.on('leave', async () => {
+                await this.loadRoom()
+            })
+        } catch (err) {
+            console.error('WebSocket connection failed:', err)
+            this.error = 'Failed to connect to room'
         }
     }
 
@@ -56,33 +81,21 @@ export class LobbyPage extends LitElement {
         try {
             this.room = await API.getRoom(this.roomCode, this.playerId)
 
-            // Проверяем что мы все еще в комнате
             const isInRoom = this.room.players.some(
                 (p) => p.id === this.playerId
             )
             if (!isInRoom) {
                 this.error = 'You are not in this room'
-                if (this.pollInterval) {
-                    clearInterval(this.pollInterval)
-                    this.pollInterval = null
-                }
                 return
             }
 
+            // ✅ Проверяем started (на случай если WebSocket еще не подключен)
             if (this.room.started) {
-                if (this.pollInterval) {
-                    clearInterval(this.pollInterval)
-                    this.pollInterval = null
-                }
                 navigate(`/room/${this.roomCode}/game`)
             }
         } catch (err) {
             this.error =
                 err instanceof Error ? err.message : 'Failed to load room'
-            if (this.pollInterval) {
-                clearInterval(this.pollInterval)
-                this.pollInterval = null
-            }
         }
     }
 
@@ -94,9 +107,8 @@ export class LobbyPage extends LitElement {
         try {
             await API.startGame(this.roomCode)
 
-            console.log('start')
-
-            navigate(`/room/${this.roomCode}/game`)
+            // ✅ Переход произойдет автоматически через WebSocket событие
+            log('Starting game...')
         } catch (err) {
             this.error =
                 err instanceof Error ? err.message : 'Failed to start game'
@@ -104,10 +116,7 @@ export class LobbyPage extends LitElement {
     }
 
     handleLeaveRoom() {
-        if (this.pollInterval) {
-            clearInterval(this.pollInterval)
-            this.pollInterval = null
-        }
+        this.ws?.close()
         localStorage.removeItem('playerId')
         navigate('/')
     }
@@ -136,7 +145,7 @@ export class LobbyPage extends LitElement {
                                   >
                               `
                             : ''}
-                        <app-button @click=${this.handleLeaveRoom}>
+                        <app-button @button-click=${this.handleLeaveRoom}>
                             Back to Home
                         </app-button>
                     </app-card>
@@ -184,7 +193,7 @@ export class LobbyPage extends LitElement {
                         : ''}
 
                     <app-button
-                        @click=${this.handleStartGame}
+                        @button-click=${this.handleStartGame}
                         ?disabled=${!canStart}
                     >
                         ${canStart
@@ -192,7 +201,10 @@ export class LobbyPage extends LitElement {
                             : 'Need at least 2 players'}
                     </app-button>
 
-                    <app-button variant="ghost" @click=${this.handleLeaveRoom}>
+                    <app-button
+                        variant="ghost"
+                        @button-click=${this.handleLeaveRoom}
+                    >
                         Leave Room
                     </app-button>
                 </app-card>

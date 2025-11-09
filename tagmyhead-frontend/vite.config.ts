@@ -7,7 +7,7 @@ export default defineConfig({
     },
     preview: {
         host: '0.0.0.0',
-        allowedHosts: ['dimalovedasha.ru', 'tagmyhead.online', 'tagmyhead.ru'],
+        allowedHosts: ['tagmyhead.ru'],
         port: 3000,
     },
     // server: {

@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"tagmyhead/models"
+	"time"
 
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
@@ -13,10 +14,6 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		return true // В продакшене настроить правильно!
 	},
-}
-
-type Pong struct {
-	Type string `json:"type"`
 }
 
 // GET /ws/:code/:playerId
@@ -57,28 +54,21 @@ func WebSocketHandler(c echo.Context) error {
 	}
 	defer ws.Close()
 
-	
-
-	// Добавляем соединение
 	room.AddConnection(playerID, ws)
 	defer room.RemoveConnection(playerID)
 
-	// Отправляем начальное состояние игры
-	gameState := room.GetGameStateForPlayer(playerID)
-	ws.WriteJSON(models.WSMessage{
-		Type: "game_state",
-		PlayerID: playerID,
-		Text: "",
-	})
-	ws.WriteJSON(gameState)
+	time.Sleep(50 * time.Millisecond)
 
-	// Уведомляем всех о подключении
+	gameState := room.GetGameStateForPlayer(playerID)
+	room.SendGameStateToPlayer(playerID, gameState)
+
 	room.Broadcast(models.WSMessage{
 		Type:       "join",
 		PlayerID:   playerID,
 		PlayerName: playerName,
-		Text:       playerName + " join to the game",
+		Text:       playerName + " joined the game",
 	})
+
 
 	// Слушаем сообщения от клиента
 	for {
@@ -106,7 +96,9 @@ func WebSocketHandler(c echo.Context) error {
 		// Обрабатываем разные типы сообщений
 		switch msg.Type {
 		case "ping":
-			ws.WriteJSON(Pong{Type: "pong"})
+			room.SendToPlayer(playerID, models.WSMessage{
+				Type: "pong",
+			})
 
 		case "set_character":
 			room.SetCharacter(msg)

@@ -37,7 +37,7 @@ type GameState struct {
 
 type PlayerConnection struct {
 	conn   *websocket.Conn
-	send   chan WSMessage
+	send   chan interface{}
 	player *Player
 	room   *Room
 }
@@ -45,7 +45,7 @@ type PlayerConnection struct {
 func NewPlayerConnection(conn *websocket.Conn, player *Player, room *Room) *PlayerConnection {
 	return &PlayerConnection{
 		conn:   conn,
-		send:   make(chan WSMessage, 256),
+		send:   make(chan interface{}, 256),
 		player: player,
 		room:   room,
 	}
@@ -218,6 +218,7 @@ func (r *Room) sendMessageToAll(msg WSMessage) {
 	}
 }
 
+
 func (r *Room) sendMessageToAllWithExceptions(msg WSMessage, exceptions []string) {
 	msg.Timestamp = time.Now().Unix()
 
@@ -270,21 +271,27 @@ func (r *Room) AddPlayer(name string) *Player {
 // Начать игру
 func (r *Room) StartGame() {
 	r.dataMu.Lock()
-	defer r.dataMu.Unlock()
 
 	if r.Started {
 		return
 	}
 
 	for i, player := range r.Players {
-		if i+1 == len(r.Players) {
+		if i + 1 == len(r.Players) {
 			r.WhoMakeFor[player.ID] = r.Players[0]
 			continue
 		}
-		r.WhoMakeFor[player.ID] = r.Players[i+1]
+		r.WhoMakeFor[player.ID] = r.Players[i + 1]
 	}
 
 	r.Started = true
+
+	r.dataMu.Unlock()
+
+	r.sendMessageToAll(WSMessage{
+		Type: "game_started",
+		Text: "Game has started!",
+	})
 }
 
 func (r *Room) SetCharacter(msg WSMessage) {
@@ -358,13 +365,21 @@ func (r *Room) Broadcast(msg WSMessage) {
 	r.sendMessageToAll(msg)
 }
 
-// Отправить сообщение конкретному игроку
+func (r *Room) SendGameStateToPlayer(playerID string, state GameState) {
+	r.connMu.RLock()
+	defer r.connMu.RUnlock()
+
+	if pc, exists := r.Connections[playerID]; exists {
+		select {
+		case pc.send <- state: // ✅ Отправляем GameState
+		default:
+			log.Printf("Channel full for player %s", playerID)
+		}
+	}
+}
+
 func (r *Room) SendToPlayer(playerID string, msg WSMessage) {
 	msg.Timestamp = time.Now().Unix()
-
-	r.dataMu.Lock()
-	r.Messages = append(r.Messages, msg)
-	r.dataMu.Unlock()
 
 	r.connMu.RLock()
 	defer r.connMu.RUnlock()
@@ -393,11 +408,12 @@ func (r *Room) GetGameStateForPlayer(playerID string) GameState {
 
 	opponentIndex := (userIndex + 1) % len(r.Players)
 
-	// Показываем персонажей всех КРОМЕ текущего игрока
 	visibleCharacters := make(map[string]string)
 	for pid, char := range r.Characters {
 		if pid != playerID {
 			visibleCharacters[pid] = char
+		} else if char != "" {
+			visibleCharacters[pid] = "?"
 		}
 	}
 

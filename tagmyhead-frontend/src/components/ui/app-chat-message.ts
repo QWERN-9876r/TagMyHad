@@ -19,7 +19,8 @@ export class AppChatMessage extends LitElement {
         | 'leave'
         | 'game_state'
         | 'set_character'
-        | 'add_winner' = 'chat'
+        | 'add_winner'
+        | 'game_started' = 'chat'
 
     @property({ type: String }) playerName = ''
     @property({ type: String }) playerId = ''
@@ -322,6 +323,7 @@ export class AppChatMessage extends LitElement {
                 this.type === 'leave' ||
                 this.type === 'system' ||
                 this.type === 'set_character' ||
+                this.type === 'game_started' ||
                 this.type === 'add_winner'
                     ? html`
                           ${this.text}
