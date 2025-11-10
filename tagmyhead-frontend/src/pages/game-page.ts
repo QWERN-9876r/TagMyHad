@@ -248,14 +248,12 @@ export class GamePage extends LitElement {
     }
 
     private handleLeaveGame() {
-        this.ws?.close()
+        navigate('/')
 
         log('Leave')
 
         localStorage.removeItem(`playerId_${this.roomCode}`)
         localStorage.removeItem(`playerName_${this.roomCode}`)
-
-        navigate('/')
     }
 
     private handleSuccessAnswer({ detail: { playerId } }: CustomEvent) {
