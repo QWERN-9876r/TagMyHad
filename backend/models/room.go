@@ -20,6 +20,7 @@ type WSMessage struct {
 	Type       string `json:"type"`
 	PlayerID   string `json:"player_id"`
 	WinnerID   string `json:"winner_id"`
+	RemovedID  string `json:"removed_id"`
 	PlayerName string `json:"player_name,omitempty"`
 	Text       string `json:"text,omitempty"`
 	Character  string `json:"character,omitempty"`
@@ -290,14 +291,14 @@ func (r *Room) RemovePlayerWithNotification(playerID string) bool {
 		return false
 	}
 
-	r.RemoveConnection(playerID)
-
 	r.sendMessageToAll(WSMessage{
-		Type:       "player_left",
-		PlayerID:   playerID,
+		Type:       "player_remove",
+		RemovedID: playerID,
 		PlayerName: playerName,
-		Text:       playerName + " left the room",
+		Text:       "",
 	})
+
+	r.RemoveConnection(playerID)
 
 	return true
 }
@@ -321,6 +322,8 @@ func (r *Room) StartGame() {
 	r.Started = true
 
 	r.dataMu.Unlock()
+
+	r.Messages = make([]WSMessage, 0)
 
 	r.sendMessageToAll(WSMessage{
 		Type: "game_started",
@@ -463,15 +466,15 @@ func (r *Room) GetGameStateForPlayer(playerID string) GameState {
 func handleWSMessage(room *Room, msg WSMessage) {
 	switch msg.Type {
 	case "chat":
-		room.Broadcast(msg)
 	case "question":
-		room.Broadcast(msg)
 	case "answer":
 		room.Broadcast(msg)
 	case "set_character":
 		room.SetCharacter(msg)
 	case "add_winner":
 		room.AddWinner(msg)
+	case "remove_player":
+		room.RemovePlayerWithNotification(msg.RemovedID)
 	case "ping":
 		room.SendToPlayer(msg.PlayerID, WSMessage{
 			Type:      "pong",

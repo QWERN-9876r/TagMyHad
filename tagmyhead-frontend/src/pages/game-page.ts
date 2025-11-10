@@ -102,8 +102,8 @@ export class GamePage extends LitElement {
     async onBeforeEnter(location: RouteContext) {
         this.roomCode = location.params.code
 
-        const playerId = localStorage.getItem('playerId')
-        const playerName = localStorage.getItem('playerName')
+        const playerId = localStorage.getItem(`playerId_${this.roomCode}`)
+        const playerName = localStorage.getItem(`playerName_${this.roomCode}`)
 
         if (!playerId || !playerName) {
             navigate('/')
@@ -172,13 +172,19 @@ export class GamePage extends LitElement {
                 ).character!
             })
 
-            this.ws.on('player_left', async (msg) => {
+            this.ws.on('remove_player', async (msg) => {
                 if (!this.room) return
 
                 this.room.players = this.room.players.filter(
                     ({ id }) => (msg as WSMessage).player_id !== id
                 )
+
+                if ((msg as WSMessage).player_id === this.playerId) {
+                    this.handleLeaveGame()
+                }
             })
+
+            this.ws.on('close', this.handleLeaveGame)
 
             this.loading = false
             this.requestUpdate()
@@ -243,7 +249,12 @@ export class GamePage extends LitElement {
 
     private handleLeaveGame() {
         this.ws?.close()
-        localStorage.removeItem('playerId')
+
+        log('Leave')
+
+        localStorage.removeItem(`playerId_${this.roomCode}`)
+        localStorage.removeItem(`playerName_${this.roomCode}`)
+
         navigate('/')
     }
 
@@ -254,13 +265,12 @@ export class GamePage extends LitElement {
     }
 
     private handleRemovePlayer(e: CustomEvent) {
-        const playerId = e.detail.id
         const playerName = e.detail.name
 
         log('Removing player:', playerName)
 
         if (confirm(`Remove player ${playerName}?`)) {
-            this.ws?.send('remove_player', { player_id: playerId })
+            this.ws?.removePlayer(e.detail.id)
             this.refreshRoom()
         }
     }
@@ -332,7 +342,7 @@ export class GamePage extends LitElement {
                                     (player) => html`
                                         <app-player-item
                                             name=${player.name}
-                                            id=${player.id}
+                                            playerId=${player.id}
                                             ?isYou=${player.id ===
                                             this.playerId}
                                             character=${this.characters[

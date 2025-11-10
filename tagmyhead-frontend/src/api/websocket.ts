@@ -118,7 +118,7 @@ export class GameWebSocket {
         })
     }
 
-    send(type: string, data: Partial<WSMessage> = {}) {
+    private send(type: string, data: Partial<WSMessage> = {}) {
         if (this.ws?.readyState === WebSocket.OPEN) {
             this.ws.send(JSON.stringify({ type, ...data }))
             log(JSON.stringify({ type, ...data }))
@@ -147,6 +147,10 @@ export class GameWebSocket {
 
     sendGuess(character: string) {
         this.send('guess', { character })
+    }
+
+    removePlayer(playerId: string) {
+        this.send('remove_player', { removed_id: playerId })
     }
 
     close() {

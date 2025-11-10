@@ -66,7 +66,7 @@ func WebSocketHandler(c echo.Context) error {
 		Type:       "join",
 		PlayerID:   playerID,
 		PlayerName: playerName,
-		Text:       playerName + " joined the game",
+		Text:       "",
 	})
 
 
@@ -84,7 +84,7 @@ func WebSocketHandler(c echo.Context) error {
 				Type:       "leave",
 				PlayerID:   playerID,
 				PlayerName: playerName,
-				Text:       playerName + " left the game",
+				Text:       "",
 			})
 			break
 		}
@@ -143,7 +143,7 @@ func WebSocketHandler(c echo.Context) error {
 				Text:       msg.Text,
 			})
 		case "remove_player":
-			room.RemovePlayerWithNotification(msg.PlayerID)
+			room.RemovePlayerWithNotification(msg.RemovedID)
 
 		default:
 			log.Printf("Unknown message type: %s", msg.Type)

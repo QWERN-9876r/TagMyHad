@@ -35,6 +35,7 @@ export interface WSMessage {
         | 'game_state'
         | 'set_character'
     player_id: string
+    removed_id?: string
     winner_id?: string
     player_name?: string
     text?: string

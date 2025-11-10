@@ -4,7 +4,7 @@ import { customElement, property } from 'lit/decorators.js'
 @customElement('app-player-item')
 export class AppPlayerItem extends LitElement {
     @property({ type: String }) name = ''
-    @property({ type: String }) id = ''
+    @property({ type: String }) playerId = ''
     @property({ type: Boolean }) isYou = false
     @property({ type: Boolean, attribute: 'is-winner' }) isWinner = false
     @property({ type: String }) character?: string
@@ -114,7 +114,7 @@ export class AppPlayerItem extends LitElement {
     private handleRemove() {
         this.dispatchEvent(
             new CustomEvent('remove-player', {
-                detail: { name: this.name, id: this.id },
+                detail: { name: this.name, id: this.playerId },
                 bubbles: true,
                 composed: true,
             })

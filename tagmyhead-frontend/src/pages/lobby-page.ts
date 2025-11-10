@@ -94,9 +94,6 @@ export class LobbyPage extends LitElement {
 
             localStorage.setItem(`playerId_${this.roomCode}`, player.id)
             localStorage.setItem(`playerName_${this.roomCode}`, player.name)
-            localStorage.setItem('playerId', player.id)
-            localStorage.setItem('playerName', player.name)
-            localStorage.setItem('lastRoomCode', this.roomCode)
 
             this.playerId = player.id
             this.showNameForm = false
@@ -139,13 +136,19 @@ export class LobbyPage extends LitElement {
                 await this.loadRoom()
             })
 
-            this.ws.on('player_left', async (msg) => {
+            this.ws.on('remove_player', async (msg) => {
                 if (!this.room) return
 
                 this.room.players = this.room.players.filter(
                     ({ id }) => (msg as WSMessage).player_id !== id
                 )
+
+                if ((msg as WSMessage).player_id === this.playerId) {
+                    this.handleLeaveRoom()
+                }
             })
+
+            this.ws.on('close', this.handleLeaveRoom)
         } catch (err) {
             console.error('WebSocket connection failed:', err)
             this.error = 'Failed to connect to room'
@@ -198,19 +201,12 @@ export class LobbyPage extends LitElement {
     }
 
     handleLeaveRoom() {
-        this.ws?.close()
+        navigate('/')
+
+        log('Leave')
 
         localStorage.removeItem(`playerId_${this.roomCode}`)
         localStorage.removeItem(`playerName_${this.roomCode}`)
-
-        const lastRoomCode = localStorage.getItem('lastRoomCode')
-        if (lastRoomCode === this.roomCode) {
-            localStorage.removeItem('playerId')
-            localStorage.removeItem('playerName')
-            localStorage.removeItem('lastRoomCode')
-        }
-
-        navigate('/')
     }
 
     private handleRemovePlayer(e: CustomEvent) {
@@ -220,11 +216,10 @@ export class LobbyPage extends LitElement {
         log('Removing player:', playerName)
 
         if (confirm(`Remove player ${playerName}?`)) {
-            this.ws?.send('remove_player', { player_id: playerId })
+            this.ws?.removePlayer(playerId)
             this.loadRoom()
         }
     }
-
     render() {
         if (this.showNameForm) {
             return html`
@@ -294,7 +289,7 @@ export class LobbyPage extends LitElement {
                             (player) => html`
                                 <app-player-item
                                     name=${player.name}
-                                    id=${player.id}
+                                    playerId=${player.id}
                                     ?isYou=${player.id === this.playerId}
                                 ></app-player-item>
                             `

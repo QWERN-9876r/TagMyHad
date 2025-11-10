@@ -32,7 +32,7 @@ func GetRoom(c echo.Context) error {
 		})
 	}
 
-	messages := make([]models.WSMessage, len(room.Messages))
+	messages := make([]models.WSMessage, 0)
 
 	for _, message := range room.Messages {
 		if message.Type == "set_character" && message.PlayerID == playerId {
