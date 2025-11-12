@@ -12,12 +12,13 @@ interface RouteContext {
     }
 }
 
+let roomCode = ''
+
 @customElement('game-page')
 export class GamePage extends LitElement {
     @state() room: Room | null = null
     @state() messages: WSMessage[] = []
     @state() error = ''
-    @state() roomCode = ''
     @state() playerId = ''
     @state() guessInput = ''
     @state() characterInput = ''
@@ -100,10 +101,10 @@ export class GamePage extends LitElement {
     }
 
     async onBeforeEnter(location: RouteContext) {
-        this.roomCode = location.params.code
+        roomCode = location.params.code
 
-        const playerId = localStorage.getItem(`playerId_${this.roomCode}`)
-        const playerName = localStorage.getItem(`playerName_${this.roomCode}`)
+        const playerId = localStorage.getItem(`playerId_${roomCode}`)
+        const playerName = localStorage.getItem(`playerName_${roomCode}`)
 
         if (!playerId || !playerName) {
             navigate('/')
@@ -121,12 +122,12 @@ export class GamePage extends LitElement {
 
     async loadRoomAndConnect() {
         try {
-            this.room = await API.getRoom(this.roomCode, this.playerId)
+            this.room = await API.getRoom(roomCode, this.playerId)
 
             this.messages = this.room.messages
 
             this.ws = new GameWebSocket()
-            await this.ws.connect(this.roomCode, this.playerId)
+            await this.ws.connect(roomCode, this.playerId)
 
             this.ws.on('*', (msg) => {
                 if (msg.type === 'init') {
@@ -140,7 +141,7 @@ export class GamePage extends LitElement {
 
                 if (msg.type === 'set_character') {
                     if (this.room) {
-                        this.room.characters[msg.player_id] = msg.character!
+                        this.room.characters[msg.playerId] = msg.character!
                     }
                 }
                 this.messages = [...this.messages, msg]
@@ -152,14 +153,14 @@ export class GamePage extends LitElement {
             })
 
             this.ws.on('add_winner', (msg) => {
-                const playerId = (msg as WSMessage).player_id
+                const playerId = (msg as WSMessage).playerId
                 const player = this.room?.players.find(
                     (player) => player.id === playerId
                 )
 
                 if (!player) return
 
-                player.is_winner = true
+                player.isWinner = true
             })
 
             this.ws.on('add_winner', () => {
@@ -167,24 +168,22 @@ export class GamePage extends LitElement {
             })
 
             this.ws.on('set_character', (msg) => {
-                this.characters[(msg as WSMessage).player_id] = (
+                this.characters[(msg as WSMessage).playerId] = (
                     msg as WSMessage
                 ).character!
             })
 
-            this.ws.on('remove_player', async (msg) => {
+            this.ws.on('player_removed', async (msg) => {
                 if (!this.room) return
 
                 this.room.players = this.room.players.filter(
-                    ({ id }) => (msg as WSMessage).player_id !== id
+                    ({ id }) => (msg as WSMessage).playerId !== id
                 )
 
-                if ((msg as WSMessage).player_id === this.playerId) {
+                if ((msg as WSMessage).removedId === this.playerId) {
                     this.handleLeaveGame()
                 }
             })
-
-            this.ws.on('close', this.handleLeaveGame)
 
             this.loading = false
             this.requestUpdate()
@@ -198,7 +197,7 @@ export class GamePage extends LitElement {
 
     async refreshRoom() {
         try {
-            this.room = await API.getRoom(this.roomCode, this.playerId)
+            this.room = await API.getRoom(roomCode, this.playerId)
 
             this.messages = this.room.messages
 
@@ -248,12 +247,12 @@ export class GamePage extends LitElement {
     }
 
     private handleLeaveGame() {
-        navigate('/')
+        localStorage.removeItem(`playerId_${roomCode}`)
+        localStorage.removeItem(`playerName_${roomCode}`)
 
         log('Leave')
 
-        localStorage.removeItem(`playerId_${this.roomCode}`)
-        localStorage.removeItem(`playerName_${this.roomCode}`)
+        navigate('/')
     }
 
     private handleSuccessAnswer({ detail: { playerId } }: CustomEvent) {
@@ -308,7 +307,7 @@ export class GamePage extends LitElement {
         return html`
             <app-container>
                 <app-card>
-                    <app-text variant="h1">Room: ${this.roomCode}</app-text>
+                    <app-text variant="h1">Room: ${roomCode}</app-text>
 
                     ${this.error
                         ? html`
@@ -346,7 +345,7 @@ export class GamePage extends LitElement {
                                             character=${this.characters[
                                                 player.id
                                             ] || ''}
-                                            ?is-winner=${player.is_winner}
+                                            ?is-winner=${player.isWinner}
                                         ></app-player-item>
                                     `
                                 )}

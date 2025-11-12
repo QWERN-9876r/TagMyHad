@@ -162,13 +162,13 @@ export class AppChatBox extends LitElement {
                                       <app-chat-message
                                           id=${hash(msg)}
                                           type=${msg.type}
-                                          playerName=${msg.player_name || ''}
+                                          playerName=${msg.playerName || ''}
                                           text=${msg.text || ''}
                                           character=${msg.character || ''}
                                           ?correct=${msg.correct || false}
                                           timestamp=${msg.timestamp}
-                                          playerId=${msg.player_id}
-                                          ?isYour=${msg.player_id ===
+                                          playerId=${msg.playerId}
+                                          ?isYour=${msg.playerId ===
                                           this.playerId}
                                       ></app-chat-message>
                                   `

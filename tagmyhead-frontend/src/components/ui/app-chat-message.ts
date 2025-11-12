@@ -283,6 +283,11 @@ export class AppChatMessage extends LitElement {
     render() {
         if (!this.text) return null
 
+        const isSystemMessage =
+            this.type !== 'chat' &&
+            this.type !== 'question' &&
+            this.type !== 'answer'
+
         return html`
             <div
                 class=${classMap({
@@ -319,12 +324,7 @@ export class AppChatMessage extends LitElement {
                           >
                       `
                     : ''}
-                ${this.type === 'join' ||
-                this.type === 'leave' ||
-                this.type === 'system' ||
-                this.type === 'set_character' ||
-                this.type === 'game_started' ||
-                this.type === 'add_winner'
+                ${isSystemMessage
                     ? html`
                           ${this.text}
                           <span class="timestamp"

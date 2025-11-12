@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"tagmyhead/models"
@@ -16,12 +17,10 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-// GET /ws/:code/:playerId
 func WebSocketHandler(c echo.Context) error {
 	roomCode := c.Param("code")
 	playerID := c.Param("playerId")
 
-	// Проверяем существование комнаты
 	room, exists := models.GetRoom(roomCode)
 	if !exists {
 		return c.JSON(http.StatusNotFound, map[string]string{
@@ -29,7 +28,6 @@ func WebSocketHandler(c echo.Context) error {
 		})
 	}
 
-	// Проверяем что игрок в комнате
 	playerExists := false
 	var playerName string
 	for _, p := range room.Players {
@@ -46,7 +44,6 @@ func WebSocketHandler(c echo.Context) error {
 		})
 	}
 
-	// Upgrade connection
 	ws, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
 		log.Printf("WebSocket upgrade error: %v", err)
@@ -62,91 +59,118 @@ func WebSocketHandler(c echo.Context) error {
 	gameState := room.GetGameStateForPlayer(playerID)
 	room.SendGameStateToPlayer(playerID, gameState)
 
-	room.Broadcast(models.WSMessage{
+	// Отправляем сообщение о присоединении
+	room.Broadcast(models.WSJoinResponse{
 		Type:       "join",
 		PlayerID:   playerID,
 		PlayerName: playerName,
-		Text:       "",
 	})
-
 
 	// Слушаем сообщения от клиента
 	for {
-		var msg models.WSMessage
-		err := ws.ReadJSON(&msg)
+		_, msgBytes, err := ws.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("WebSocket error: %v", err)
 			}
 			
-			// Уведомляем о выходе
-			room.Broadcast(models.WSMessage{
+			room.Broadcast(models.WSLeaveResponse{
 				Type:       "leave",
 				PlayerID:   playerID,
 				PlayerName: playerName,
-				Text:       "",
 			})
 			break
 		}
 
-		// Устанавливаем ID отправителя
-		msg.PlayerID = playerID
-		msg.PlayerName = playerName
+		// Сначала читаем только тип сообщения
+		var baseMsg models.WSMessageBase
+		if err := json.Unmarshal(msgBytes, &baseMsg); err != nil {
+			log.Printf("Error parsing message type: %v", err)
+			continue
+		}
 
-		// Обрабатываем разные типы сообщений
-		switch msg.Type {
+		// Обрабатываем в зависимости от типа
+		switch baseMsg.Type {
 		case "ping":
-			room.SendToPlayer(playerID, models.WSMessage{
+			room.SendToPlayer(playerID, models.WSPongResponse{
 				Type: "pong",
 			})
 
 		case "set_character":
+			var msg models.WSSetCharacterMessage
+			if err := json.Unmarshal(msgBytes, &msg); err != nil {
+				log.Printf("Error parsing set_character: %v", err)
+				continue
+			}
 			room.SetCharacter(msg)
 
-		case "add_winner":
-			room.AddWinner(msg)
-
 		case "chat":
-			// Просто транслируем чат всем
+			var msg models.WSChatMessage
+			if err := json.Unmarshal(msgBytes, &msg); err != nil {
+				log.Printf("Error parsing chat: %v", err)
+				continue
+			}
+			msg.PlayerID = playerID
+			msg.PlayerName = playerName
 			room.Broadcast(msg)
 
 		case "guess":
-			// Игрок пытается угадать своего персонажа
+			var msg models.WSGuessMessage
+			if err := json.Unmarshal(msgBytes, &msg); err != nil {
+				log.Printf("Error parsing guess: %v", err)
+				continue
+			}
+			
 			correctCharacter := room.Characters[playerID]
 			isCorrect := msg.Character == correctCharacter
 			
-			// Отправляем результат угадывания всем
-			room.Broadcast(models.WSMessage{
+			room.Broadcast(models.WSGuessResultResponse{
 				Type:       "guess_result",
 				PlayerID:   playerID,
 				PlayerName: playerName,
 				Character:  msg.Character,
-				Correct:    &isCorrect,
-				Text:       playerName + " попытался угадать: " + msg.Character,
+				Correct:    isCorrect,
 			})
 
 		case "question":
-			// Игрок задает вопрос (да/нет)
-			room.Broadcast(models.WSMessage{
-				Type:       "question",
-				PlayerID:   playerID,
-				PlayerName: playerName,
-				Text:       msg.Text,
-			})
+			var msg models.WSQuestionMessage
+			if err := json.Unmarshal(msgBytes, &msg); err != nil {
+				log.Printf("Error parsing question: %v", err)
+				continue
+			}
+			msg.PlayerID = playerID
+			msg.PlayerName = playerName
+			room.Broadcast(msg)
 
 		case "answer":
-			// Кто-то отвечает на вопрос
-			room.Broadcast(models.WSMessage{
-				Type:       "answer",
-				PlayerID:   playerID,
-				PlayerName: playerName,
-				Text:       msg.Text,
-			})
+			var msg models.WSQuestionMessage
+			if err := json.Unmarshal(msgBytes, &msg); err != nil {
+				log.Printf("Error parsing answer: %v", err)
+				continue
+			}
+			msg.Type = "answer"
+			msg.PlayerID = playerID
+			msg.PlayerName = playerName
+			room.Broadcast(msg)
+
+		case "move_player":
+			var msg models.WSMovePlayerMessage
+			if err := json.Unmarshal(msgBytes, &msg); err != nil {
+				log.Printf("Error parsing move_player: %v", err)
+				continue
+			}
+			room.MovePlayer(msg.PlayerName, 0)
+
 		case "remove_player":
+			var msg models.WSRemovePlayerMessage
+			if err := json.Unmarshal(msgBytes, &msg); err != nil {
+				log.Printf("Error parsing remove_player: %v", err)
+				continue
+			}
 			room.RemovePlayerWithNotification(msg.RemovedID)
 
 		default:
-			log.Printf("Unknown message type: %s", msg.Type)
+			log.Printf("Unknown message type: %s", baseMsg.Type)
 		}
 	}
 

@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"tagmyhead/models"
+	"time"
 
 	"github.com/labstack/echo/v4"
 )
@@ -19,37 +20,67 @@ func CreateRoom(c echo.Context) error {
 	})
 }
 
+type RoomResponse struct {
+	Code       string                 `json:"code"`
+	Players    []models.Player         `json:"players"`
+	Started    bool                   `json:"started"`
+	Characters map[string]string      `json:"characters"`
+	Messages   []interface{}          `json:"messages"`
+}
+
 // GET /api/room/:code
 func GetRoom(c echo.Context) error {
 	code := c.Param("code")
 	query := c.QueryParams()
 	playerId := query.Get("playerId")
+	
 	room, exists := models.GetRoom(code)
-
 	if !exists {
 		return c.JSON(http.StatusNotFound, map[string]string{
 			"error": "Room not found",
 		})
 	}
 
-	messages := make([]models.WSMessage, 0)
-
-	for _, message := range room.Messages {
-		if message.Type == "set_character" && message.PlayerID == playerId {
-			continue
-		}
-
-		messages = append(messages, message)
+	player := room.GetPlayer(playerId)
+	if player == nil {
+		return c.JSON(http.StatusForbidden, map[string]string{
+			"error": "Player not in room",
+		})
 	}
 
-	return c.JSON(http.StatusOK, models.Room{
-		Code: room.Code,
-		Players: room.Players,
-		Started: room.Started,
-		Characters: room.Characters,
-		Messages: messages,
-	})
+	snapshotChan := room.GetSnapshotForPlayer(playerId)
+
+	ctx := c.Request().Context()
+	
+	select {
+	case snapshot, ok := <-snapshotChan:
+		if !ok {
+			return c.JSON(http.StatusServiceUnavailable, map[string]string{
+				"error": "Failed to get room snapshot",
+			})
+		}
+		
+		response := RoomResponse{
+			Code:       snapshot.Code,
+			Players:    snapshot.Players,
+			Started:    snapshot.Started,
+			Characters: snapshot.Characters,
+			Messages:   snapshot.Messages,
+		}
+		return c.JSON(http.StatusOK, response)
+		
+	case <-ctx.Done():
+		return c.JSON(http.StatusRequestTimeout, map[string]string{
+			"error": "Request cancelled or timeout",
+		})
+		
+	case <-time.After(5 * time.Second):
+		return c.JSON(http.StatusRequestTimeout, map[string]string{
+			"error": "Request timeout",
+		})
+	}
 }
+
 
 type JoinRoomRequest struct {
 	Name string `json:"name"`

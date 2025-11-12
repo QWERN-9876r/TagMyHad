@@ -1,7 +1,7 @@
 export interface Player {
     id: string
     name: string
-    is_winner?: boolean
+    isWinner?: boolean
 }
 
 export interface Room {
@@ -10,7 +10,7 @@ export interface Room {
     started: boolean
     created_at: string
     characters: Record<string, string>
-    who_make_for?: Record<string, string>
+    whoMakeFor?: Record<string, string>
     messages: WSMessage[]
 }
 
@@ -34,10 +34,10 @@ export interface WSMessage {
         | 'guess_result'
         | 'game_state'
         | 'set_character'
-    player_id: string
-    removed_id?: string
-    winner_id?: string
-    player_name?: string
+    playerId: string
+    removedId?: string
+    winnerId?: string
+    playerName?: string
     text?: string
     character?: string
     correct?: boolean

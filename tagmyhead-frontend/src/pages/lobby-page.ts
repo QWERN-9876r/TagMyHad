@@ -136,14 +136,14 @@ export class LobbyPage extends LitElement {
                 await this.loadRoom()
             })
 
-            this.ws.on('remove_player', async (msg) => {
+            this.ws.on('player_removed', async (msg) => {
                 if (!this.room) return
 
                 this.room.players = this.room.players.filter(
-                    ({ id }) => (msg as WSMessage).player_id !== id
+                    ({ id }) => (msg as WSMessage).playerId !== id
                 )
 
-                if ((msg as WSMessage).player_id === this.playerId) {
+                if ((msg as WSMessage).removedId === this.playerId) {
                     this.handleLeaveRoom()
                 }
             })

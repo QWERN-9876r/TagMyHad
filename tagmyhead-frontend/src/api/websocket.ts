@@ -142,15 +142,15 @@ export class GameWebSocket {
     }
 
     addWinner(winnerId: string) {
-        this.send('add_winner', { winner_id: winnerId })
+        this.send('add_winner', { winnerId: winnerId })
     }
 
     sendGuess(character: string) {
         this.send('guess', { character })
     }
 
-    removePlayer(playerId: string) {
-        this.send('remove_player', { removed_id: playerId })
+    removePlayer(removedId: string) {
+        this.send('remove_player', { removedId })
     }
 
     close() {
