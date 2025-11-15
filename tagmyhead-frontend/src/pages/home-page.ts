@@ -5,7 +5,6 @@ import { API } from '../api/api'
 import { navigate } from '../router'
 import { toggleDevMode } from '../utils/isDev'
 import { withViewTransition } from '../utils/with-view-trasition'
-import { log } from '../utils/log'
 
 @customElement('home-page')
 export class HomePage extends LitElement {
