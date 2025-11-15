@@ -4,6 +4,8 @@ import { API } from '../api/api'
 
 import { navigate } from '../router'
 import { toggleDevMode } from '../utils/isDev'
+import { withViewTransition } from '../utils/with-view-trasition'
+import { log } from '../utils/log'
 
 @customElement('home-page')
 export class HomePage extends LitElement {
@@ -15,6 +17,67 @@ export class HomePage extends LitElement {
 
     createRenderRoot() {
         return this
+    }
+
+    // Функция для извлечения кода из ссылки
+    private extractRoomCodeFromUrl(url: string): string | null {
+        try {
+            const urlObj = new URL(url)
+            // Проверяем путь вида /room/CODE или /room/CODE/game
+            const pathParts = urlObj.pathname.split('/')
+            const roomIndex = pathParts.indexOf('room')
+
+            if (roomIndex !== -1 && pathParts[roomIndex + 1]) {
+                const code = pathParts[roomIndex + 1]
+                // Проверяем, что код состоит из букв и цифр и имеет подходящую длину
+                if (/^[A-Z0-9]{4,10}$/i.test(code)) {
+                    return code.toUpperCase()
+                }
+            }
+
+            // Проверяем параметры URL
+            const codeParam =
+                urlObj.searchParams.get('code') ||
+                urlObj.searchParams.get('room')
+            if (codeParam && /^[A-Z0-9]{4,10}$/i.test(codeParam)) {
+                return codeParam.toUpperCase()
+            }
+        } catch (e) {
+            // Если URL некорректный, возвращаем null
+            return null
+        }
+
+        return null
+    }
+
+    private handlePaste(event: ClipboardEvent) {
+        const target = event.target as HTMLInputElement
+        if (target.id !== 'join-code-input') return // Обрабатываем только поле кода комнаты
+
+        event.preventDefault()
+
+        const clipboardData = event.clipboardData
+        if (!clipboardData) return
+
+        const pastedText = clipboardData.getData('text/plain')
+
+        // Пытаемся извлечь код из вставленного текста
+        const roomCode = this.extractRoomCodeFromUrl(pastedText) || pastedText
+
+        // Проверяем, что это валидный код комнаты (только буквы и цифры, 4-10 символов)
+        if (/^[A-Z0-9]{4,10}$/i.test(roomCode)) {
+            this.joinCode = roomCode.toUpperCase()
+        } else {
+            // Если это не код, вставляем как есть
+            this.joinCode = pastedText.toUpperCase()
+        }
+    }
+
+    private networkError(err: unknown) {
+        console.error('Error:', err)
+        this.error = err instanceof Error ? err.message : 'Room not found'
+        this.loading = false
+        this.requestUpdate()
     }
 
     async handleCreateRoom() {
@@ -70,26 +133,29 @@ export class HomePage extends LitElement {
         this.requestUpdate()
 
         try {
-            const room = await API.getRoom(code, '')
+            if (await API.hasRoom(code)) {
+                API.joinRoom(code, name)
+                    .then(async ({ id }) => {
+                        localStorage.setItem(`playerName_${code}`, name)
+                        localStorage.setItem(`playerId_${code}`, id)
 
-            if (room.started) {
-                this.error = 'This game has already started'
-                this.loading = false
-                this.requestUpdate()
-                return
+                        const room = await API.getRoom(code, name)
+
+                        if (room.started) {
+                            this.error = 'This game has already started'
+                            this.loading = false
+                            this.requestUpdate()
+                            return
+                        }
+
+                        navigate(`/room/${code}`)
+                    })
+                    .catch((err) => this.networkError(err))
+            } else {
+                this.networkError('Room not found')
             }
-
-            localStorage.setItem(`playerName_${code}`, name)
-
-            API.joinRoom(code, name).then(({ id }) => {
-                localStorage.setItem(`playerId_${code}`, id)
-                navigate(`/room/${code}`)
-            })
         } catch (err) {
-            console.error('Error:', err)
-            this.error = err instanceof Error ? err.message : 'Room not found'
-            this.loading = false
-            this.requestUpdate()
+            this.networkError(err)
         }
     }
 
@@ -137,7 +203,10 @@ export class HomePage extends LitElement {
                         <app-button
                             ?loading=${this.loading}
                             ?disabled=${this.loading}
-                            @button-click=${this.handleCreateRoom}
+                            @button-click=${withViewTransition(
+                                this.handleCreateRoom,
+                                this
+                            )}
                         >
                             ${this.loading ? 'Creating...' : 'Create Room'}
                         </app-button>
@@ -148,6 +217,7 @@ export class HomePage extends LitElement {
                     <app-text variant="h2">Join Existing Room</app-text>
                     <div>
                         <app-input
+                            id="join-code-input"
                             placeholder="Room Code (e.g. ABC123)"
                             .value=${this.joinCode}
                             maxlength="6"
@@ -157,6 +227,7 @@ export class HomePage extends LitElement {
                             @app-input=${(e: CustomEvent) => {
                                 this.joinCode = e.detail.value.toUpperCase()
                             }}
+                            @paste=${this.handlePaste}
                         ></app-input>
                         <app-input
                             placeholder="Your name"
@@ -171,7 +242,10 @@ export class HomePage extends LitElement {
                             variant="secondary"
                             ?loading=${this.loading}
                             ?disabled=${this.loading}
-                            @button-click=${this.handleJoinRoom}
+                            @button-click=${withViewTransition(
+                                this.handleJoinRoom,
+                                this
+                            )}
                         >
                             ${this.loading ? 'Joining...' : 'Join Room'}
                         </app-button>

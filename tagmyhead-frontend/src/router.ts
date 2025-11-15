@@ -35,5 +35,11 @@ export function initRouter(outlet: HTMLElement) {
 }
 
 export function navigate(path: string) {
-    Router.go(path)
+    if (document.startViewTransition) {
+        document.startViewTransition(() => {
+            return Router.go(path)
+        })
+    } else {
+        Router.go(path)
+    }
 }

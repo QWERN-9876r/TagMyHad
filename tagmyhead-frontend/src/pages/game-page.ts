@@ -152,10 +152,10 @@ export class GamePage extends LitElement {
                 this.refreshRoom()
             })
 
-            this.ws.on('add_winner', (msg) => {
-                const playerId = (msg as WSMessage).playerId
+            this.ws.on('winner_added', (msg) => {
+                const { winnerId } = msg as WSMessage
                 const player = this.room?.players.find(
-                    (player) => player.id === playerId
+                    (player) => player.id === winnerId
                 )
 
                 if (!player) return
@@ -163,8 +163,8 @@ export class GamePage extends LitElement {
                 player.isWinner = true
             })
 
-            this.ws.on('add_winner', () => {
-                this.refreshRoom()
+            this.ws.on('winner_added', () => {
+                this.requestUpdate()
             })
 
             this.ws.on('set_character', (msg) => {

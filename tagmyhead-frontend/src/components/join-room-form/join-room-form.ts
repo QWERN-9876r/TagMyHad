@@ -73,7 +73,7 @@ export class JoinRoomForm extends LitElement {
     render() {
         return html`
             <div class="join-form-container">
-                <div class="join-form-card">
+                <div class="join-form-card modal-transition">
                     <div class="join-form-header">
                         <h1 class="join-form-title">
                             <span class="emoji">🎮</span>

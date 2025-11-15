@@ -17,6 +17,12 @@ export class API {
         return res.json()
     }
 
+    static async hasRoom(code: string): Promise<boolean> {
+        const res = await fetch(`${API_BASE}/room/${code}?playerId=a`)
+
+        return res.status === 403
+    }
+
     static async joinRoom(code: string, name: string): Promise<Player> {
         const res = await fetch(`${API_BASE}/room/${code}/join`, {
             method: 'POST',

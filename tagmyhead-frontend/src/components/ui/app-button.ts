@@ -102,7 +102,6 @@ export class AppButton extends LitElement {
             return
         }
 
-        // Диспатчим событие которое всплывает наружу
         this.dispatchEvent(
             new CustomEvent('button-click', {
                 bubbles: true,

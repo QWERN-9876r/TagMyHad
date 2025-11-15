@@ -28,7 +28,7 @@ export const joinRoomFormStyles = css`
         padding: var(--space-2xl);
         max-width: 500px;
         width: 100%;
-        animation: slideUp 0.5s ease-out;
+        /* animation: slideUp 0.5s ease-out; */
     }
 
     @media (max-width: 768px) {

@@ -66,7 +66,7 @@ export class GameWebSocket {
             if (this.ws?.readyState === WebSocket.OPEN) {
                 this.send('ping')
             }
-        }, 30000)
+        }, 5000)
     }
 
     private stopHeartbeat() {
